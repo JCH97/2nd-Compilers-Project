@@ -1,11 +1,13 @@
-import pyl.lex as lex
+import ply.lex as lex
 
-#### Tokens list ####
+
+###### TOKEN LISTS ######
+
 literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.', ',']
 
-keywords = {
+reserved = {
     'class': 'CLASS',
-    'inhirits': 'INHIRITS',
+    'inherits': 'INHERITS',
     'if': 'IF',
     'then': 'THEN',
     'else': 'ELSE',
@@ -16,20 +18,29 @@ keywords = {
     'let': 'LET',
     'in': 'IN',
     'case': 'CASE',
+    'of': 'OF',
     'esac': 'ESAC',
     'new': 'NEW',
-    'isvoid': 'ISVOID'
+    'isvoid': 'ISVOID',
 }
 
 ignored = [' ', '\n', '\f', '\r', '\t', '\v']
 
-tokens = ['TYPE', 'ID', 'INTEGER', 'STRING', 'BOOL', 'ACTION', 'ASSIGN',
-          'LESS', 'LESSEQUAL', 'EQUAL', 'INT_COMPLEMENT', 'NOT'] + list(keywords.values())
+tokens = [
+    # Identifiers
+    'TYPE', 'ID',
+    # Primitive data types
+    'INTEGER', 'STRING', 'BOOL',
+    # Special keywords
+    'ACTION',
+    # Operators
+    'ASSIGN', 'LESS', 'LESSEQUAL', 'EQUAL', 'INT_COMPLEMENT', 'NOT',
+] + list(reserved.values())
 
-### TOKENS RULES ###
 
-#### Primitive values #####
+###### TOKEN RULES ######
 
+# Primitive data types
 
 def t_INTEGER(t):
     r'[0-9]+'
@@ -44,17 +55,19 @@ def t_STRING(t):
 
 
 def t_BOOL(t):
-    r'(true|false)'
-    t.value = True if t == 'true' else False
+    r'true|false'
+    t.value = True if t.value == 'true' else False
     return t
 
 
 def t_COMMENT(t):
     r'--[^\n]+\n|\(\*[^(\*\))]+\*\)'
-    pass
+    pass  # Discard comments
+
+# Other tokens with precedence before TYPE and ID
 
 
-def t_TYPE(t):
+def t_NOT(t):
     r'[nN][oO][tT]'
     return t
 
@@ -68,7 +81,7 @@ def t_TYPE(t):
 
 def t_ID(t):
     r'[a-z][A-Za-z0-9_]*'
-    t.type = keywords.get(t.value.lower(), 'ID')
+    t.type = reserved.get(t.value.lower(), 'ID')
     return t
 
 # Operators
@@ -85,21 +98,22 @@ t_INT_COMPLEMENT = r'~'
 t_ACTION = r'=>'
 
 
-###### Special rules ######
+###### SPECIAL RULES ######
 
 def t_error(t):
-    print("Ilegal character '{}'".format(t.value[0]))
+    print("Illegal character '{}'".format(t.value[0]))
     t.lexer.skip(1)
 
 
 t_ignore = ''.join(ignored)
 
 
-##### Create lexer #######
+###### CREATE LEXER ######
 
+# lex.lex(optimize=1) compress code and file
 lex.lex()
 
-##### Tokenizer #####
+###### TOKENIZER ######
 
 
 def tokenizer(code):
@@ -115,8 +129,8 @@ def tokenizer(code):
 
     return tokens
 
+##### PROCESS INPUT ######
 
-##### PROCCESS INPUT ######
 
 if __name__ == '__main__':
 
@@ -124,11 +138,10 @@ if __name__ == '__main__':
 
     import sys
     if len(sys.argv) != 2:
-        print('You need to specify a cool source file to read from.', file=sys.stderr)
+        print('You need to specify a cool source file to read from.', sys.stderr)
         sys.exit(1)
     if not sys.argv[1].endswith('.cl'):
-        print('Argument needs to be a cool source file ending on ".cl".',
-              file=sys.stderr)
+        print('Argument needs to be a cool source file ending on ".cl".',  sys.stderr)
         sys.exit(1)
 
     sourcefile = sys.argv[1]
