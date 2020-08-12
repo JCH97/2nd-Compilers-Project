@@ -1,7 +1,7 @@
 from queue import Queue
-from cmp.pycompiler import Grammar, Item
-from cmp.automata import State
-from cmp.utils import ContainerSet
+from .pycompiler import Grammar, Item
+from .automata import State
+from .utils import ContainerSet
 
 class GrammarTools:
     @staticmethod
@@ -171,7 +171,7 @@ class ShiftReduceParser:
         
         while True:
             state = stack[-1]
-            lookahead = w[cursor]
+            lookahead = w[cursor].token_type
             if self.verbose: print(stack, w[cursor:])
                 
             # (Detect error)
@@ -197,7 +197,7 @@ class ShiftReduceParser:
                     assert False, 'Must be something wrong!'
             except KeyError:
                 print('Parsing Error:', stack, w[cursor:])
-                return None, None
+                return w[cursor:][0], None
 
 class LR1Parser(ShiftReduceParser):
     @staticmethod

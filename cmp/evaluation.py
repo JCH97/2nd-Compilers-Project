@@ -1,5 +1,5 @@
-from cmp.pycompiler import EOF
-from cmp.grammartools import ShiftReduceParser, Action
+from .pycompiler import EOF
+from .grammartools import ShiftReduceParser, Action
 
 def evaluate_reverse_parse(right_parse, operations, tokens):
     if not right_parse or not operations or not tokens:
@@ -11,7 +11,8 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
     for operation in operations:
         if operation == Action.SHIFT:
             token = next(tokens)
-            stack.append(token.lex)
+            # stack.append(token.lex)
+            stack.append(token)
         elif operation == Action.REDUCE:
             production = next(right_parse)
             head, body = production
