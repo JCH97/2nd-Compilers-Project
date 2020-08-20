@@ -7,22 +7,14 @@ from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncD
 class TypeBuilder:
     def __init__(self, context, errors=[]):
         self.context = context
-        self.errors = errors
         self.current_type = None
+        self.errors = errors
 
+        # Building built-in types
         self.object_type = self.context.get_type('Object')
-        self.object_type.define_method('abort', [], [], self.object_type)
-        self.object_type.define_method('type_name', [], [], self.string_type)
-        self.object_type.define_method('copy', [], [], SelfType())
 
         self.io_type = self.context.get_type('IO')
         self.io_type.set_parent(self.object_type)
-        self.io_type.define_method('out_string', ['x'], [
-                                   self.string_type], SelfType())
-        self.io_type.define_method(
-            'out_int', ['x'], [self.int_type], SelfType())
-        self.io_type.define_method('in_string', [], [], self.string_type)
-        self.io_type.define_method('in_int', [], [], self.int_type)
 
         self.int_type = self.context.get_type('Int')
         self.int_type.set_parent(self.object_type)
@@ -31,15 +23,27 @@ class TypeBuilder:
         self.string_type = self.context.get_type('String')
         self.string_type.set_parent(self.object_type)
         self.string_type.sealed = True
+
+        self.bool_type = self.context.get_type('Bool')
+        self.bool_type.set_parent(self.object_type)
+        self.bool_type.sealed = True
+
+        self.object_type.define_method('abort', [], [], self.object_type)
+        self.object_type.define_method('type_name', [], [], self.string_type)
+        self.object_type.define_method('copy', [], [], SelfType())
+
+        self.io_type.define_method('out_string', ['x'], [
+                                   self.string_type], SelfType())
+        self.io_type.define_method(
+            'out_int', ['x'], [self.int_type], SelfType())
+        self.io_type.define_method('in_string', [], [], self.string_type)
+        self.io_type.define_method('in_int', [], [], self.int_type)
+
         self.string_type.define_method('length', [], [], self.int_type)
         self.string_type.define_method(
             'concat', ['s'], [self.string_type], self.string_type)
         self.string_type.define_method(
             'substr', ['i', 'l'], [self.int_type, self.int_type], self.string_type)
-
-        self.bool_type = self.context.get_type('Bool')
-        self.bool_type.set_parent(self.object_type)
-        self.bool_type.sealed = True
 
     @visitor.on('node')
     def visit(self, node):
@@ -47,8 +51,8 @@ class TypeBuilder:
 
     @visitor.when(ProgramNode)
     def visit(self, node):
-        for d in node.declarations:
-            self.visit(d)
+        for def_class in node.declarations:
+            self.visit(def_class)
 
         try:
             self.context.get_type('Main').get_method('main')
@@ -64,26 +68,26 @@ class TypeBuilder:
             try:
                 parent_type = self.context.get_type(node.parent)
                 self.current_type.set_parent(parent_type)
-            except SemanticError as err:
-                self.errors.append(err.text)
+            except SemanticError as ex:
+                self.errors.append(ex.text)
         else:
             self.current_type.set_parent(self.object_type)
 
-        for f in node.features:
-            self.visit(f)
+        for feature in node.features:
+            self.visit(feature)
 
     @visitor.when(AttrDeclarationNode)
     def visit(self, node):
         try:
             attr_type = self.context.get_type(node.type)
-        except SemanticError as err:
-            self.errors.append(err.text)
+        except SemanticError as ex:
+            self.errors.append(ex.text)
             attr_type = ErrorType()
 
         try:
             self.current_type.define_attribute(node.id, attr_type)
-        except SemanticError as err:
-            self.errors.append(err.text)
+        except SemanticError as ex:
+            self.errors.append(ex.text)
 
     @visitor.when(FuncDeclarationNode)
     def visit(self, node):
