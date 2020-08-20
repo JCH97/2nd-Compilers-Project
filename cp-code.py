@@ -3,12 +3,12 @@ from cmp.semantic import SemanticError
 from cmp.semantic import Attribute, Method, Type
 from cmp.semantic import SelfType, AutoType, ErrorType
 from cmp.semantic import Context, Scope
-from cool_parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
-from cool_parser import MemberCallNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode
-from cool_parser import AssignNode, UnaryNode, BinaryNode
-from cool_parser import FunctionCallNode, NewNode, AtomicNode
-from cool_parser import CoolGrammar, CoolParser
-from cool_lexer import tokenizer
+from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
+from parser import MemberCallNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode
+from parser import AssignNode, UnaryNode, BinaryNode
+from parser import FunctionCallNode, NewNode, AtomicNode
+from parser import CoolGrammar, CoolParser
+from lexer import tokenizer
 from cmp.utils import Token
 from cmp.evaluation import evaluate_reverse_parse
 
@@ -356,9 +356,10 @@ def run_pipeline(text):
               for token in tokenizer(text)] + [Token('$', CoolGrammar.EOF)]
     pprint_tokens(tokens)
     print('=================== PARSE =====================')
+    #print([t.token_type for t in tokens])
     parse, operations = CoolParser([t.token_type for t in tokens])
     print('\n'.join(repr(x) for x in parse))
-    print('==================== AST ======================')
+    # print('==================== AST ======================')
     ast = evaluate_reverse_parse(parse, operations, tokens)
     formatter = FormatVisitor()
     tree = formatter.visit(ast)
@@ -392,12 +393,13 @@ class A {
     b: Int;
 };
 
+
 class B inherits A {
     c: A <- new A;
     f(d: Int, a: A): String { {
         isvoid d;
         f(1, new A);
-        let f: Int <- 1 in { 
+        let f: Int <- 1 in {
             8;
             if not 5 <= 20 then f * 34 + ~1 else 43 / f + 12 fi;
         };

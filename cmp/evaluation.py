@@ -1,6 +1,7 @@
 from .pycompiler import EOF
 from .grammartools import ShiftReduceParser, Action
 
+
 def evaluate_reverse_parse(right_parse, operations, tokens):
     if not right_parse or not operations or not tokens:
         return
@@ -11,13 +12,13 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
     for operation in operations:
         if operation == Action.SHIFT:
             token = next(tokens)
-            # stack.append(token.lex)
-            stack.append(token)
+            stack.append(token.lex)
         elif operation == Action.REDUCE:
             production = next(right_parse)
             head, body = production
             attributes = production.attributes
-            assert all(rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
+            assert all(
+                rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
             rule = attributes[0]
 
             if len(body):
