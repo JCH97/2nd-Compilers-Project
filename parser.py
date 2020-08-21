@@ -94,6 +94,10 @@ class BinaryNode(ExpressionNode):
         self.right = right
 
 
+class ArithmeticNode(BinaryNode):
+    pass
+
+
 class LessEqualNode(BinaryNode):
     pass
 
