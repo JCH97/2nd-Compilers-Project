@@ -1,5 +1,5 @@
 import visitor as visitor
-from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNodeAssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
+from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
 from semantic import Scope, SelfType, AutoType, ErrorType, SemanticError
 
 
@@ -139,7 +139,7 @@ class TypeCheck:
     def visit(self, node, scope):
         child_scope = scope.create_child()
 
-        for idx, typex, exp in node.body:
+        for idx, typex, exp in node.let_body:
             try:
                 node_type = self.context.get_type(typex)
             except SemanticError as err:
@@ -161,3 +161,163 @@ class TypeCheck:
 
         self.visit(node.in_body, child_scope)
         node.static_type = node.in_body.static_type
+
+    # case <expr0> of
+        # <id1> : <type1> => <expr1>
+        # . . .
+        # <idn> : <typen> => <exprn>
+    # esac
+    @visitor.when(CaseOfNode)
+    def visit(self, node, scope):
+        self.visit(node.expression, scope.create_child())
+        node.static_type = None
+
+        for idx, typex, expr in node.branches:
+            try:
+                node_type = self.context.get_type(typex)
+            except SemanticError as err:
+                self.errors.append(err.text)
+                node_type = ErrorType()
+
+            id_type = self.current_type if isinstance(
+                node_type, SelfType) else node_type
+
+            child_scope = scope.create_child()
+            child_scope.define_variable(idx, id_type)
+            self.visit(expr, child_scope)
+            expr_type = expr.static_type
+
+            node.static_type = node.static_type.type_union(
+                expr_type) if node.static_type else expr_type
+
+    # <id> <- <expression>
+    @visitor.when(AssignNode)
+    def visit(self, node, scope):
+        self.visit(expression, scope.create_child())
+        exp_type = node.expression.static_type
+
+        if scope.is_defined(node.id):
+            var = scope.find_variale(node.id)
+            node_type = var.type
+
+            if var.name == 'self':
+                self.errors.append(SELF_IS_READONLY)
+            elif not exp_type.conforms_to(node_type):
+                self.errors.append(INCOMPATIBLE_TYPES %
+                                   (expr_type.name, node_type.name))
+        else:
+            self.errors.append(VARIABLE_NOT_DEFINED) % (
+                node.id, self.current_method.name)
+
+        node.static_type = exp_type
+
+    @visitor.when(NotNode)
+    def visit(self, node, scope):
+        self.visit(node.expression, scope.create_child())
+        expr_type = node.expression.static_type
+
+        if not expr_type.conforms_to(self.bool_type):
+            self.errors.append(INCOMPATIBLE_TYPES %
+                               (expr_type.name, self.bool_type.name))
+
+    # <exp1> <= <exp2>
+    @visitor.when(LessEqualNode)
+    def visit(self, node, scope):
+        self.visit(node.left, scope.create_child())
+        left_type = node.left.static_type
+
+        if not left_type.conforms_to(self.int_type):
+            self.errors.append(INVALID_OPERATION %
+                               (left_type.name, self.int_type.name))
+
+        self.visit(node.right, scope.create_child())
+        right_type = node.right.static_type
+
+        if not right_type.conforms_to(self.int_type):
+            self.errors.append(INVALID_OPERATION %
+                               (right_type.name, self.int_type.name))
+
+        node.static_type = self.bool_type
+
+    # <exp1> < <exp2>
+    @visitor.when(LessNode)
+    def visit(self, node, scope):
+        self.visit(node.left, scope.create_child())
+        left_type = node.left.static_type
+
+        if not left_type.conforms_to(self.int_type):
+            self.errors.append(INVALID_OPERATION %
+                               (left_type.name, self.int_type.name))
+
+        self.visit(node.right, scope.create_child())
+        right_type = node.right.static_type
+
+        if not right_type.conforms_to(self.int_type):
+            self.errors.append(INVALID_OPERATION %
+                               (right_type.name, self.int_type.name))
+
+        node.static_type = self.bool_type
+
+    # <exp1> = <exp2>
+    @visitor.when(EqualNode)
+    def visit(self, node, scope):
+        self.visit(node.left, scope.create_child())
+        left_type = node.left.static_type
+
+        self.visit(node.right, scope.create_child())
+        right_type = node.right.static_type
+
+        # [0 ^ 0 = 0] [1 ^ 1 = 0] [0 ^ 1 = 1] [1 ^ 0 == 1]
+        if left_type.conforms_to(self.int_type) ^ right_type.conforms_to(self.int_type):
+            self.errors.append(INVALID_OPERATION %
+                               (left_type.name, right_type.name))
+
+        if left_type.conforms_to(self.string_type) ^ right_type.conforms_to(self.string_type):
+            self.errors.append(INVALID_OPERATION %
+                               (left_type.name, right_type.name))
+
+        if left_type.conforms_to(self.bool_type) ^ right_type.conforms_to(self.bool_type):
+            self.errors.append(INVALID_OPERATION %
+                               (left_type.name, right_type.name))
+
+        node.static_type = self.bool_type
+
+    @visitor.when(ArithmeticNode)
+    def visit(self, node, scope):
+        self.visit(node.left, scope.create_child())
+        left_type = node.left.static_type
+
+        self.visit(node.right, scope.create_child())
+        right_type = node.right.static_type
+
+        if not left_type.conforms_to(self.int_type) or not right_type.conforms_to(self.int_type):
+            self.errors.append(INVALID_OPERATION %
+                               (left_type.name, right_type.name))
+
+        node.static_type = self.int_type
+
+    # isvoid <exp>
+    @visitor.when(IsVoidNode)
+    def visit(self, node, scope):
+        self.visit(node.expression, scope.create_child())
+
+        node.static_type = self.bool_type
+
+    @visitor.when(ComplementNode)
+    def visit(self, node, scope):
+        self.visit(node.expression, scope.create_child())
+
+        expr_type = node.expression.static_type
+        if not expr_type.conforms_to(self.int_type):
+            self.errors.append(INCOMPATIBLE_TYPES %
+                               (expr_type.name, self.int_type.name))
+
+        node.static_type = self.int_type
+
+    # <expr>.<id>(<expr>,...,<expr>)
+    # <id>(<expr>,...,<expr>)
+    # <expr>@<type>.id(<expr>,...,<expr>)
+    @visitor.when(FunctionCallNode)
+    def visit(self, node, scope):
+        self.visit(node.obj, scope.create_child())
+        obj_type = node.obj.static_type
