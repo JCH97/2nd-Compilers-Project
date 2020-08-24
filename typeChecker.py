@@ -321,3 +321,102 @@ class TypeCheck:
     def visit(self, node, scope):
         self.visit(node.obj, scope.create_child())
         obj_type = node.obj.static_type
+
+        try:
+            if node.type:
+                try:
+                    node_type = self.context.get_type(node.type)
+                except SemanticError as err:
+                    self.errors.append(err.text)
+                    node_type = ErrorType()
+
+                if not obj_type.conforms_to(node_type):
+                    self.errors.append(INCOMPATIBLE_TYPES %
+                                       (obj_type.name, node_type.name))
+
+                obj_type = node_type
+
+            obj_method = self.context.get_method(node.id)
+
+            if len(node.args) == len(obj_method.param_types):
+                for arg, param_type in zip(node.args, obj_method.param_types):
+                    self.visit(arg, scope.create_child())
+
+                    arg_type = arg.static_type
+
+                    if not arg_type.conforms_to(param_type):
+                        self.errors.append(INCOMPATIBLE_TYPES %
+                                           (arg_type.name, param_type.name))
+            else:
+                self.errors.append(
+                    f'Method {obj_method.name} of {obj_type} only accepts {len(obj_method.param_type)} argument(s)')
+
+            node_type = obj_type if isinstance(
+                obj_method.return_type, SelfType) else obj_method.return_type
+        except SemanticError as err:
+            self.errors.append(err.text)
+            node_type = ErrorType()
+
+        node.static_type = node_type
+
+    @visitor.when(MemberCallNode)
+    def visit(self, node, scope):
+        obj_type = self.current_type
+
+        try:
+            method = self.context.get_method(node.id)
+
+            if len(node.args) == len(method.param_types):
+                for arg, param_type in zip(node.args, method.param_types):
+                    self.visit(arg, scope.create_child())
+
+                    arg_type = arg.static_type
+
+                    if not arg_type.conforms_to(param_type):
+                        self.errors.append(INCOMPATIBLE_TYPES %
+                                           (arg_type.name, param_type.name))
+            else:
+                self.errors.append(
+                    f'Method {method.name} of {obj_type} only accepts {len(method.param_type)} argument(s)')
+
+            node_type = obj_type if isinstance(
+                obj_method.return_type, SelfType) else obj_method.return_type
+
+        except SemanticError as err:
+            self.errors.append(err.text)
+
+        node.static_type = node_type
+
+    # new <type>
+    @visitor.when(NewNode)
+    def visit(self, node, scope):
+        try:
+            node_type = scope.get_type(node.type)
+        except SemanticError as err:
+            self.errors.append(err.text)
+            node_type = ErrorType()
+
+        node.static_type = node_type
+
+    @visitor.when(IntegerNode)
+    def visit(self, node, scope):
+        node.static_type = self.int_type
+
+    @visitor.when(StringNode)
+    def visit(self, node, scope):
+        node.static_type = self.string_type
+
+    @visitor.when(IdNode)
+    def visit(self, node, scope):
+        if scope.is_defined(node.lex):
+            node_type = scope.find_variable(node.lex).type
+        else:
+            node_type = ErrorType()
+            self.errors.append(VARIABLE_NOT_DEFINED %
+                               (node.lex, self.current_method.name))
+
+        node.static_type = node_type
+
+    @visitor.when(BoolNode)
+    def visit(self, node, scope):
+        node.static_type = self.bool_type
