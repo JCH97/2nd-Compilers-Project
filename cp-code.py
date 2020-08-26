@@ -13,6 +13,7 @@ from cmp.utils import Token
 from cmp.evaluation import evaluate_reverse_parse
 from typeCollector import TypeCollector
 from typeBuilder import TypeBuilder
+from typeChecker import TypeChecker
 
 
 # class TypeCollector(object):
@@ -383,7 +384,14 @@ def run_pipeline(text):
     print(']')
     print('Context:')
     print(context)
-    return ast, errors, context
+    print('============== CHECKING TYPES ====================')
+    checker = TypeChecker(context, errors)
+    scope = checker.visit(ast)
+    print('Errors: [')
+    for error in errors:
+        print('\t', error)
+    print(']')
+    return ast, errors, context, scope
 
 
 text = '''
@@ -395,10 +403,9 @@ class A {
     b: Int;
 };
 
-
 class B inherits A {
     c: A <- new A;
-    f(d: Int, a: A): String { {
+    f(d: Int, a: A): String { { 
         isvoid d;
         f(1, new A);
         let f: Int <- 1 in {
@@ -411,24 +418,62 @@ class B inherits A {
     z: Bool <- false;
 };
 
+class Point {
+    x : AUTO_TYPE;
+    y : AUTO_TYPE;
+    init(n : Int, m : Int) : SELF_TYPE { {
+        x <- n;
+        y <- m;
+        self;
+    } };
+};
+
 class Main inherits IO {
-  main(): Object { {
-    out_string("Enter an integer greater-than or equal-to 0: ");
+    main(): Object { {
+        out_string("Enter an integer greater-than or equal-to 0: ");
 
-    let input: Int <- in_int() in
-      if input < 0 then
-        out_string("ERROR: Number must be greater-than or equal-to 0\\n")
-      else {
-        out_string("The factorial of ").out_int(input);
-        out_string(" is ").out_int(factorial(input));
-        out_string("\\n");
-      }
-      fi;
-  } };
+        let input: Int <- in_int() in
+        if input < 0 then
+            out_string("ERROR: Number must be greater-than or equal-to 0\\n")
+        else {
+            out_string("The factorial of ").out_int(input);
+            out_string(" is ").out_int(factorial(input));
+            out_string("\\n");
+        }
+        fi;
+    } };
 
-  factorial(num: Int): Int {
-    if num = 0 then 1 else num * factorial(num - 1) fi
-  };
+    test() : AUTO_TYPE {
+        let x : AUTO_TYPE <- 3 + 2 in {
+            case x of
+                y : Int => out_string("Ok");
+            esac;
+        }
+    };
+
+    factorial(num: Int): Int {
+        if num = 0 then 1 else num * factorial(num - 1) fi
+    };
+
+    ackermann(m : AUTO_TYPE, n: AUTO_TYPE) : AUTO_TYPE {
+        if (m=0) then n+1 else
+            if (n=0) then ackermann(m-1, 1) else
+                ackermann(m-1, ackermann(m, n-1))
+            fi
+        fi
+    };
+
+    f(a: AUTO_TYPE, b: AUTO_TYPE) : AUTO_TYPE {
+        if (a=1) then b else
+            g(a + 1, b/2)
+        fi
+    };
+
+    g(a: AUTO_TYPE, b: AUTO_TYPE) : AUTO_TYPE {
+        if (b=1) then a else
+            f(a/2, b+1)
+        fi
+    };
 };
 '''
 

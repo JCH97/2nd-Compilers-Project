@@ -1,6 +1,6 @@
-import visitor as visitor
+import cmp.visitor as visitor
+from cmp.semantic import Scope, SelfType, AutoType, ErrorType, SemanticError
 from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
-from semantic import Scope, SelfType, AutoType, ErrorType, SemanticError
 
 
 WRONG_SIGNATURE = 'Method "%s" already defined in "%s" with a different signature.'
@@ -11,7 +11,7 @@ VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
 INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
 
 
-class TypeCheck:
+class TypeChecker:
     def __init__(self, context, errors=[]):
         self.context = context
         self.errors = errors
@@ -24,12 +24,12 @@ class TypeCheck:
         self.string_type = self.context.get_type('String')
         self.bool_type = self.context.get_type('Bool')
 
-    @visitor('on')
+    @visitor.on('node')
     def visit(self, node, scope):
         pass
 
     @visitor.when(ProgramNode)
-    def visit(self, node, scope):
+    def visit(self, node, scope=None):
         scope = Scope()
         for class_declaration in node.declarations:
             self.visit(class_declaration, scope.create_child())
@@ -46,7 +46,7 @@ class TypeCheck:
                 self.visit(f, scope.create_child())
 
         for a in self.current_type.attributes:
-            scope.define_variable(a.id, a.type)
+            scope.define_variable(a.name, a.type)
 
         for f in node.features:
             if isinstance(f, FuncDeclarationNode):
@@ -82,7 +82,7 @@ class TypeCheck:
 
         # zip empareja uno con uno y crea y array de tuplas
         # a = [1, 2, 3]  b = ['a', 'b', 'c']  => zip(a, b) = [(1, 'a'), (2, 'b'), (3, 'c')]
-        for pname, ptype in zip(self.current_method.param_names, self.current_method.params_types):
+        for pname, ptype in zip(self.current_method.param_names, self.current_method.param_types):
             scope.define_variable(pname, ptype)
 
         self.visit(node.body, scope.create_child())
@@ -151,7 +151,7 @@ class TypeCheck:
 
             if exp:
                 self.visit(exp, scope.create_child())
-                exp_type = exp_type.static_type
+                exp_type = exp.static_type
 
                 if not exp_type.conforms_to(id_type):
                     self.errors.append(INCOMPATIBLE_TYPES %
@@ -193,18 +193,18 @@ class TypeCheck:
     # <id> <- <expression>
     @visitor.when(AssignNode)
     def visit(self, node, scope):
-        self.visit(expression, scope.create_child())
+        self.visit(node.expression, scope.create_child())
         exp_type = node.expression.static_type
 
         if scope.is_defined(node.id):
-            var = scope.find_variale(node.id)
+            var = scope.find_variable(node.id)
             node_type = var.type
 
             if var.name == 'self':
                 self.errors.append(SELF_IS_READONLY)
             elif not exp_type.conforms_to(node_type):
                 self.errors.append(INCOMPATIBLE_TYPES %
-                                   (expr_type.name, node_type.name))
+                                   (exp_type.name, node_type.name))
         else:
             self.errors.append(VARIABLE_NOT_DEFINED) % (
                 node.id, self.current_method.name)
@@ -219,6 +219,8 @@ class TypeCheck:
         if not expr_type.conforms_to(self.bool_type):
             self.errors.append(INCOMPATIBLE_TYPES %
                                (expr_type.name, self.bool_type.name))
+
+        node.static_type = self.bool_type
 
     # <exp1> <= <exp2>
     @visitor.when(LessEqualNode)
@@ -336,7 +338,7 @@ class TypeCheck:
 
                 obj_type = node_type
 
-            obj_method = self.context.get_method(node.id)
+            obj_method = obj_type.get_method(node.id)
 
             if len(node.args) == len(obj_method.param_types):
                 for arg, param_type in zip(node.args, obj_method.param_types):
@@ -364,7 +366,7 @@ class TypeCheck:
         obj_type = self.current_type
 
         try:
-            method = self.context.get_method(node.id)
+            method = obj_type.get_method(node.id)
 
             if len(node.args) == len(method.param_types):
                 for arg, param_type in zip(node.args, method.param_types):
@@ -380,7 +382,7 @@ class TypeCheck:
                     f'Method {method.name} of {obj_type} only accepts {len(method.param_type)} argument(s)')
 
             node_type = obj_type if isinstance(
-                obj_method.return_type, SelfType) else obj_method.return_type
+                method.return_type, SelfType) else method.return_type
 
         except SemanticError as err:
             self.errors.append(err.text)
@@ -391,7 +393,7 @@ class TypeCheck:
     @visitor.when(NewNode)
     def visit(self, node, scope):
         try:
-            node_type = scope.get_type(node.type)
+            node_type = self.context.get_type(node.type)
         except SemanticError as err:
             self.errors.append(err.text)
             node_type = ErrorType()

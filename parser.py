@@ -110,19 +110,19 @@ class EqualNode(BinaryNode):
     pass
 
 
-class PlusNode(BinaryNode):
+class PlusNode(ArithmeticNode):
     pass
 
 
-class MinusNode(BinaryNode):
+class MinusNode(ArithmeticNode):
     pass
 
 
-class StarNode(BinaryNode):
+class StarNode(ArithmeticNode):
     pass
 
 
-class DivNode(BinaryNode):
+class DivNode(ArithmeticNode):
     pass
 
 
