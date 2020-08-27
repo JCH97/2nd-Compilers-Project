@@ -3,12 +3,13 @@ from cmp.semantic import Scope, SelfType, AutoType, ErrorType, SemanticError
 from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
 
 
-WRONG_SIGNATURE = 'Method "%s" already defined in "%s" with a different signature.'
+WRONG_SIGNATURE = 'Method "%s" of "%s" already defined in "%s" with a different signature.'
 SELF_IS_READONLY = 'Variable "self" is read-only.'
 LOCAL_ALREADY_DEFINED = 'Variable "%s" is already defined in method "%s".'
 INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
 VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
 INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
+CYCLIC_HERITAGE = 'Type "%s" froms a cyclic heritage chain'
 
 
 class TypeChecker:
@@ -41,12 +42,24 @@ class TypeChecker:
     def visit(self, node, scope):
         self.current_type = self.context.get_type(node.id)
 
+        # check cicling herencing
+        parent = self.current_type.parent
+        while parent:
+            if parent == self.current_type:
+                self.errors.append(CYCLIC_HERITAGE % (parent.name))
+                self.current_type.parent = self.object_type
+                break
+            parent = parent.parent
+
+        # for f in node.features:
+        #     self.visit(f, scope.create_child())
+
         for f in node.features:
             if isinstance(f, AttrDeclarationNode):
                 self.visit(f, scope.create_child())
 
-        for a in self.current_type.attributes:
-            scope.define_variable(a.name, a.type)
+        for attr in self.current_type.attributes:
+            scope.define_variable(attr.name, attr.type)
 
         for f in node.features:
             if isinstance(f, FuncDeclarationNode):
@@ -55,7 +68,6 @@ class TypeChecker:
     # id: type [ <- <expression>]
     @visitor.when(AttrDeclarationNode)
     def visit(self, node, scope):
-        # check attribute redefinition
 
         if node.expression:
             self.visit(node.expression, scope.create_child())
@@ -75,10 +87,21 @@ class TypeChecker:
     # };
     @visitor.when(FuncDeclarationNode)
     def visit(self, node, scope):
-        # check illegal redefinition
 
         self.current_method = self.current_type.get_method(node.id)
         scope.define_variable('self', self.current_type)
+
+        # check illegal redefinition
+        parent = self.current_type.parent
+        if parent:
+            try:
+                parent_method = parent.get_method(node.id)
+            except SemanticError as err:
+                pass
+            else:
+                if parent_method.param_types != self.current_method.param_types or parent_method.return_type != self.current_method.return_type:
+                    self.errors.append(WRONG_SIGNATURE % (
+                        self.current_method.name, self.current_type.name, parent.name))
 
         # zip empareja uno con uno y crea y array de tuplas
         # a = [1, 2, 3]  b = ['a', 'b', 'c']  => zip(a, b) = [(1, 'a'), (2, 'b'), (3, 'c')]
@@ -178,6 +201,10 @@ class TypeChecker:
             except SemanticError as err:
                 self.errors.append(err.text)
                 node_type = ErrorType()
+            else:
+                if isinstance(node_type, SelfType):
+                    self.errors.append(
+                        f'Type "{node_type.name}" cannot be used as case branch type')
 
             id_type = self.current_type if isinstance(
                 node_type, SelfType) else node_type
@@ -270,15 +297,15 @@ class TypeChecker:
         right_type = node.right.static_type
 
         # [0 ^ 0 = 0] [1 ^ 1 = 0] [0 ^ 1 = 1] [1 ^ 0 == 1]
-        if left_type.conforms_to(self.int_type) ^ right_type.conforms_to(self.int_type):
+        if isinstance(left_type, AutoType) or isinstance(right_type, AutoType):
+            pass
+        elif left_type.conforms_to(self.int_type) ^ right_type.conforms_to(self.int_type):
             self.errors.append(INVALID_OPERATION %
                                (left_type.name, right_type.name))
-
-        if left_type.conforms_to(self.string_type) ^ right_type.conforms_to(self.string_type):
+        elif left_type.conforms_to(self.string_type) ^ right_type.conforms_to(self.string_type):
             self.errors.append(INVALID_OPERATION %
                                (left_type.name, right_type.name))
-
-        if left_type.conforms_to(self.bool_type) ^ right_type.conforms_to(self.bool_type):
+        elif left_type.conforms_to(self.bool_type) ^ right_type.conforms_to(self.bool_type):
             self.errors.append(INVALID_OPERATION %
                                (left_type.name, right_type.name))
 

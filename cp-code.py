@@ -405,10 +405,10 @@ class A {
 
 class B inherits A {
     c: A <- new A;
-    f(d: Int, a: A): String { { 
+    f(d: Int, a: A): String { {
         isvoid d;
         f(1, new A);
-        let f: Int <- 1 in {
+        let f: Int <- 1 in { 
             8;
             if not 5 <= 20 then f * 34 + ~1 else 43 / f + 12 fi;
         };
@@ -443,10 +443,13 @@ class Main inherits IO {
         fi;
     } };
 
+    out_string(y: Int): SELF_TYPE { 3 };
+
     test() : AUTO_TYPE {
         let x : AUTO_TYPE <- 3 + 2 in {
             case x of
                 y : Int => out_string("Ok");
+                w : SELF_TYPE => out_string("Wrong!");
             esac;
         }
     };
@@ -475,6 +478,11 @@ class Main inherits IO {
         fi
     };
 };
+
+class A1 inherits A2 { w(ww: SELF_TYPE): SELF_TYPE { self }; };
+class A2 inherits A3 { x(z: Int): Int { 1 / 1 }; };
+class A3 inherits A4 { x(z: Int): Int { 1 + 1 }; };
+class A4 inherits A1 { x(y: Int): Int { 1 }; };
 '''
 
 if __name__ == '__main__':
