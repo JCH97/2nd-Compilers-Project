@@ -34,7 +34,7 @@ class TypeInferer:
         self.current_type = self.context.get_type(node.id)
 
         # visit attributes and  classDeclarations
-        for feature, childScope in zip(node.features, scope.childre):
+        for feature, childScope in zip(node.features, scope.children):
             self.visit(feature, childScope)
 
         # recorrer todas las variables locales que estan definidas por typeChecker
@@ -70,11 +70,12 @@ class TypeInferer:
 
     @visitor.when(FuncDeclarationNode)
     def visit(self, node, scope):
-        self.current_method = self.context.get_method(node.id)
+        self.current_method = self.current_type.get_method(node.id)
         return_type = self.current_method.return_type
 
-        self.visit(node.body, scope.children[0], return_type if not isinstance(
-            return_type, SelfType) else self.current_type)
+        #print(len(scope.children), node.id)
+        self.visit(node.body, scope.children[0], self.current_type if isinstance(
+            return_type, SelfType) else return_type)
 
         body_type = node.body.static_type
 
@@ -87,7 +88,7 @@ class TypeInferer:
                     pass
                 else:
                     var.infered = self.check = True
-                    self.current_method.param_types[i] = var_type
+                    self.current_method.param_types[i] = var.type
 
         var = self.current_method.return_info
         if not var.infered:
@@ -224,7 +225,7 @@ class TypeInferer:
     @visitor.when(ArithmeticNode)
     def visit(self, node, scope, expected_type=None):
         self.visit(node.left, scope.children[0], self.int_type)
-        self.visit(node.right, scope.childre[1], self.int_type)
+        self.visit(node.right, scope.children[1], self.int_type)
 
         node.static_type = self.int_type
 
@@ -321,17 +322,17 @@ class TypeInferer:
         if scope.is_defined(node.lex):
             var = scope.find_variable(node.lex)
 
-            if spected_type and not var.infered:
-                if isinstance(spected_type, ErrorType) or isinstance(spected_type, SelfType):
-                    print(f'Error!!!! {spected_type}')
-                elif isinstance(spected_type, AutoType):
-                    print(f'{spected_type}?????')
+            if expected_type and not var.infered:
+                if isinstance(expected_type, ErrorType) or isinstance(expected_type, SelfType):
+                    print(f'Error!!!! {expected_type}')
+                elif isinstance(expected_type, AutoType):
+                    print(f'{expected_type}?????')
                 elif isinstance(var.type, ErrorType):
                     pass
                 elif isinstance(var.type, AutoType):
-                    var.type = spected_type
-                elif not var.type.conforms_to(spected_type):
-                    var.type = spected_type if spected_type.conforms_to(
+                    var.type = expected_type
+                elif not var.type.conforms_to(expected_type):
+                    var.type = expected_type if expected_type.conforms_to(
                         var.type) else ErrorType()
 
             node_type = var.type if var.infered else AutoType()

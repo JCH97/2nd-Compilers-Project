@@ -51,19 +51,12 @@ class TypeChecker:
                 break
             parent = parent.parent
 
-        # for f in node.features:
-        #     self.visit(f, scope.create_child())
-
-        for f in node.features:
-            if isinstance(f, AttrDeclarationNode):
-                self.visit(f, scope.create_child())
-
+        # define las variables de la clase [las variables(que son los atributos) que se definiero en typeBuilder]
         for attr in self.current_type.attributes:
             scope.define_variable(attr.name, attr.type)
 
         for f in node.features:
-            if isinstance(f, FuncDeclarationNode):
-                self.visit(f, scope.create_child())
+            self.visit(f, scope.create_child())
 
     # id: type [ <- <expression>]
     @visitor.when(AttrDeclarationNode)
