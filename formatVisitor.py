@@ -11,7 +11,7 @@ from parser import CoolGrammar, CoolParser
 from lexer import tokenizer
 
 
-class FormatVisitor(object):
+class FormatVisitor:
     @visitor.on('node')
     def visit(self, node, tabs):
         pass
@@ -25,25 +25,27 @@ class FormatVisitor(object):
 
     @visitor.when(ClassDeclarationNode)
     def visit(self, node, tabs=0):
-        parent = '' if node.parent is None else f"inherits {node.parent}"
+        parent = '' if node.parent is None else f"inherits {node.parent.lex}"
         ans = '\t' * tabs + \
-            f'\\__ClassDeclarationNode: class {node.id} {parent} {{ <feature> ... <feature> }}'
+            f'\\__ClassDeclarationNode: class {node.id.lex} {parent} {{ <feature> ... <feature> }}'
         features = '\n'.join(self.visit(child, tabs + 1)
                              for child in node.features)
         return f'{ans}\n{features}'
 
     @visitor.when(AttrDeclarationNode)
     def visit(self, node, tabs=0):
-        ans = '\t' * tabs + f'\\__AttrDeclarationNode: {node.id}: {node.type}' + (
-            '<- <expr>' if node.expression else '')
-        expr = node.visit(node.expr, tabs + 1) if node.expression else None
+        ans = '\t' * tabs + f'\\__AttrDeclarationNode: {node.id.lex}: {node.type.lex}' + (
+            ' <- <expr>' if node.expression else '') + ';'
+        expr = self.visit(node.expression, tabs +
+                          1) if node.expression else None
         return f'{ans}' + (f'\n{expr}' if expr else '')
 
     @visitor.when(FuncDeclarationNode)
     def visit(self, node, tabs=0):
-        params = ', '.join(': '.join(param) for param in node.params)
+        params = ', '.join(': '.join(tok.lex for tok in param)
+                           for param in node.params)
         ans = '\t' * tabs + \
-            f'\\__FuncDeclarationNode: {node.id}({params}): {node.type} {{ <expr> }}'
+            f'\\__FuncDeclarationNode: {node.id.lex}({params}): {node.type.lex} {{ <expr> }}'
         body = self.visit(node.body, tabs + 1)
         return f'{ans}\n{body}'
 
@@ -71,7 +73,7 @@ class FormatVisitor(object):
 
     @visitor.when(LetInNode)
     def visit(self, node, tabs=0):
-        let_body = ', '.join(f'{idx}: {typex}' + (' <- <expr>' if expr else '')
+        let_body = ', '.join(f'{idx.lex}: {typex.lex}' + (' <- <expr>' if expr else '')
                              for idx, typex, expr in node.let_body)
         ans = '\t' * tabs + f'\\_LetInNode: let {let_body} in <expr>'
         lets = '\n'.join(self.visit(expr, tabs + 1)
@@ -82,7 +84,7 @@ class FormatVisitor(object):
     @visitor.when(CaseOfNode)
     def visit(self, node, tabs=0):
         case_body = ' '.join(
-            f'{idx}: {typex} => <expr>;' for idx, typex, expr in node.branches)
+            f'{idx.lex}: {typex.lex} => <expr>;' for idx, typex, expr in node.branches)
         ans = '\t' * tabs + f'\\_CaseOfNode: case <expr> of {case_body} esac'
         expression = self.visit(node.expression, tabs + 1)
         body = '\n'.join(self.visit(expr, tabs + 1)
@@ -91,7 +93,7 @@ class FormatVisitor(object):
 
     @visitor.when(AssignNode)
     def visit(self, node, tabs=0):
-        ans = '\t' * tabs + f'\\_AssingNode: {node.id} <- <expr>'
+        ans = '\t' * tabs + f'\\_AssingNode: {node.id.lex} <- <expr>'
         expr = self.visit(node.expression, tabs + 1)
         return f'{ans}\n{expr}'
 
@@ -111,23 +113,23 @@ class FormatVisitor(object):
     @visitor.when(FunctionCallNode)
     def visit(self, node, tabs=0):
         obj = self.visit(node.obj, tabs + 1)
-        typex = f'@{node.type}' if node.type else ''
+        typex = f'@{node.type.lex}' if node.type else ''
         ans = '\t' * tabs + \
-            f'\\__FunctionCallNode: <obj>{typex}.{node.id}(<expr>, ..., <expr>)'
+            f'\\__FunctionCallNode: <obj>{typex}.{node.id.lex}(<expr>, ..., <expr>)'
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{obj}\n{args}'
 
     @visitor.when(MemberCallNode)
     def visit(self, node, tabs=0):
         ans = '\t' * tabs + \
-            f'\\__MemberCallNode: {node.id}(<expr>, ..., <expr>)'
+            f'\\__MemberCallNode: {node.id.lex}(<expr>, ..., <expr>)'
         args = '\n'.join(self.visit(arg, tabs + 1) for arg in node.args)
         return f'{ans}\n{args}'
 
     @visitor.when(NewNode)
     def visit(self, node, tabs=0):
-        return '\t' * tabs + f'\\__ NewNode: new {node.type}'
+        return '\t' * tabs + f'\\__ NewNode: new {node.type.lex}'
 
     @visitor.when(AtomicNode)
     def visit(self, node, tabs=0):
-        return '\t' * tabs + f'\\__ {node.__class__.__name__}: {node.lex}'
+        return '\t' * tabs + f'\\__ {node.__class__.__name__}: {node.token.lex}'

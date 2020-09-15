@@ -90,12 +90,17 @@ def run_pipeline(text):
     print('=================== TEXT ======================')
     print(text)
     print('================== TOKENS =====================')
-    tokens = [Token(token.value, tokens_dict[token.type])
-              for token in tokenizer(text)] + [Token('$', CoolGrammar.EOF)]
+    # tokens = [Token(token.value, tokens_dict[token.type])
+    #   for token in tokenizer(text)] + [Token('$', CoolGrammar.EOF)]
+    tokens = tokenizer(text)
     pprint_tokens(tokens)
     print('=================== PARSE =====================')
     #print([t.token_type for t in tokens])
-    parse, operations = CoolParser([t.token_type for t in tokens])
+    parse, operations = CoolParser(tokens)
+    if not operations:  # error y el Token donde se detecto el error viene en parse
+        print(
+            f'Unexpected token "{parse.lex}" in line "{parse.line}" and column "{parse.column}"')
+        return
     print('\n'.join(repr(x) for x in parse))
     print('==================== AST ======================')
     ast = evaluate_reverse_parse(parse, operations, tokens)

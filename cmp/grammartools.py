@@ -175,7 +175,8 @@ class ShiftReduceParser:
 
         while True:
             state = stack[-1]
-            lookahead = w[cursor]
+            # se cambio aqui y para en caso de error poder devolver el token y asi poder tomar la linea y la columna del error.
+            lookahead = w[cursor].token_type
             if self.verbose:
                 print(stack, w[cursor:])
 
@@ -202,8 +203,10 @@ class ShiftReduceParser:
                 else:
                     assert False, 'Must be something wrong!'
             except KeyError:
-                print('Parsing Error:', stack, w[cursor:])
-                return None, None
+                #print('Parsing Error:', stack, w[cursor:])
+                # cambio para retornar el Token donde dio error y con ello tomar la linea y la columna del error
+                # esto deberia retornar el parse y las operaciones, pero en lugar del parser retornamos el token donde hubo error
+                return w[cursor], None
 
 
 class LR1Parser(ShiftReduceParser):

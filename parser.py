@@ -11,6 +11,8 @@ class Node:
 class ProgramNode(Node):
     def __init__(self, declarations):
         self.declarations = declarations
+        self.line = declarations[0].line
+        self.column = declarations[0].column
 
 
 class DeclarationNode(Node):
@@ -22,6 +24,8 @@ class ClassDeclarationNode(DeclarationNode):
         self.id = idx
         self.parent = parent
         self.features = features
+        self.line = idx.line
+        self.column = idx.column
 
 
 class FuncDeclarationNode(DeclarationNode):
@@ -30,13 +34,17 @@ class FuncDeclarationNode(DeclarationNode):
         self.params = params
         self.type = return_type
         self.body = body
+        self.line = idx.line
+        self.column = idx.column
 
 
 class AttrDeclarationNode(DeclarationNode):
     def __init__(self, idx, typex, expression=None):
         self.id = idx
         self.type = typex
-        self.expression = None
+        self.expression = expression
+        self.line = idx.line
+        self.column = idx.column
 
 
 class ExpressionNode(Node):
@@ -48,40 +56,54 @@ class IfThenElseNode(ExpressionNode):
         self.condition = condition
         self.if_body = if_body
         self.else_body = else_body
+        self.line = condition.line
+        self.column = condition.column
 
 
 class WhileLoopNode(ExpressionNode):
     def __init__(self, condition, body):
         self.condition = condition
         self.body = body
+        self.line = condition.line
+        self.column = condition.column
 
 
 class BlockNode(ExpressionNode):
     def __init__(self, expressions):
         self.expressions = expressions
+        self.line = expressions[-1].line
+        self.column = expressions[-1].column
 
 
 class LetInNode(ExpressionNode):
     def __init__(self, let_body, in_body):
         self.let_body = let_body
         self.in_body = in_body
+        self.line = let_in.line
+        self.column = let_in.column
 
 
 class CaseOfNode(ExpressionNode):
     def __init__(self, expression, branches):
         self.expression = expression
         self.branches = branches
+        self.line = expression.line
+        self.column = expression.column
 
 
 class AssignNode(ExpressionNode):
     def __init__(self, idx, expression):
         self.id = idx
         self.expression = expression
+        self.line = idx.line
+        self.column = idx.column
 
 
 class UnaryNode(ExpressionNode):
     def __init__(self, expression):
         self.expression = expression
+        self.line = expression.line
+        self.column = expression.column
 
 
 class NotNode(UnaryNode):
@@ -92,6 +114,8 @@ class BinaryNode(ExpressionNode):
     def __init__(self, left, right):
         self.left = left
         self.right = right
+        self.line = left.line
+        self.column = left.column
 
 
 class ArithmeticNode(BinaryNode):
@@ -140,22 +164,31 @@ class FunctionCallNode(ExpressionNode):
         self.id = idx
         self.args = args
         self.type = typex
+        self.line = idx.line
+        self.column = idx.column
 
 
 class MemberCallNode(ExpressionNode):
     def __init__(self, idx, args):
         self.id = idx
         self.args = args
+        self.line = idx.line
+        self.column = idx.column
 
 
 class NewNode(ExpressionNode):
     def __init__(self, typex):
         self.type = typex
+        self.line = typex.line
+        self.column = typex.column
 
 
+# check this
 class AtomicNode(ExpressionNode):
-    def __init__(self, lex):
-        self.lex = lex
+    def __init__(self, token):
+        self.token = token
+        self.line = token.line
+        self.column = token.column
 
 
 class IntegerNode(AtomicNode):
