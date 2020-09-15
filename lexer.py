@@ -1,5 +1,6 @@
 import ply.lex as lex
-
+from cmp.utils import Token
+from parser import CoolGrammar
 
 ###### TOKEN LISTS ######
 
@@ -24,7 +25,7 @@ reserved = {
     'isvoid': 'ISVOID',
 }
 
-ignored = [' ', '\n', '\f', '\r', '\t', '\v']
+ignored = [' ', '\f', '\r', '\t', '\v']
 
 tokens = [
     # Identifiers
@@ -37,10 +38,26 @@ tokens = [
     'ASSIGN', 'LESS', 'LESSEQUAL', 'EQUAL', 'INT_COMPLEMENT', 'NOT',
 ] + list(reserved.values())
 
+tokens_dict = dict()
+
+for t in tokens + literals:
+    try:
+        tokens_dict[t] = CoolGrammar[t.lower()]
+    except KeyError:
+        pass
+
+
+tokens_dict['ACTION'] = CoolGrammar['=>']
+tokens_dict['ASSIGN'] = CoolGrammar['<-']
+tokens_dict['LESS'] = CoolGrammar['<']
+tokens_dict['LESSEQUAL'] = CoolGrammar['<=']
+tokens_dict['EQUAL'] = CoolGrammar['=']
+tokens_dict['INT_COMPLEMENT'] = CoolGrammar['~']
 
 ###### TOKEN RULES ######
 
 # Primitive data types
+
 
 def t_INTEGER(t):
     r'[0-9]+'
@@ -63,6 +80,17 @@ def t_BOOL(t):
 def t_COMMENT(t):
     r'--[^\n]+\n|\(\*[^(\*\))]+\*\)'
     pass  # Discard comments
+
+
+def t_newline(t):
+    r'\n+'
+    t.lexer.lineno += len(t.value)
+
+
+def find_column(input, token):
+    if token:
+        line_start = input.rfind('\n', 0, token.lexpos) + 1
+        return (token.lexpos - line_start) + 1
 
 # Other tokens with precedence before TYPE and ID
 
@@ -111,21 +139,24 @@ t_ignore = ''.join(ignored)
 ###### CREATE LEXER ######
 
 # lex.lex(optimize=1) compress code and file
-lex.lex()
+lexer = lex.lex()
 
 ###### TOKENIZER ######
 
 
 def tokenizer(code):
-    lex.input(code)
+    lexer.input(code)
 
     tokens = []
 
     while True:
-        token = lex.token()
+        token = lexer.token()
         if token is None:
             break
-        tokens.append(token)
+        tokens.append(Token(
+            token.value, tokens_dict[token.type], token.lineno, find_column(code, token)))
+
+    tokens.append(Token('$', CoolGrammar.EOF))
 
     return tokens
 
@@ -148,13 +179,16 @@ if __name__ == '__main__':
 
     # Read source file
 
+    global readed
     with open(sourcefile, 'r') as source:
-        lex.input(source.read())
+        readed = source.read()
+        lexer.input(readed)
 
     # Read tokens
 
     while True:
-        token = lex.token()
+        token = lexer.token()
+        col = find_column(readed, token)
         if token is None:
             break
-        print(token)
+        print(token.value, token.lineno, col)
