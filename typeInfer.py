@@ -31,7 +31,7 @@ class TypeInferer:
     @visitor.when(ClassDeclarationNode)
     def visit(self, node, scope):
 
-        self.current_type = self.context.get_type(node.id)
+        self.current_type = self.context.get_type(node.id.lex)
 
         # visit attributes and  classDeclarations
         for feature, childScope in zip(node.features, scope.children):
@@ -51,13 +51,13 @@ class TypeInferer:
     @visitor.when(AttrDeclarationNode)
     def visit(self, node, scope):
         if node.expression:
-            attr = self.current_type.get_attribute(node.id)
+            attr = self.current_type.get_attribute(node.id.lex)
 
             # visitar la expression, el scope de la expression esta en 0 xq a los atributos solo se le puede asignar un tipo expression y xq tanto estas tienen su scope en 0
             self.visit(node.expression, scope.children[0], attr.type)
             exp_type = node.expression.static_type
 
-            var = scope.find_variable(node.id)
+            var = scope.find_variable(node.id.lex)
             if not var.infered:
                 if isinstance(var, ErrorType):
                     pass
@@ -70,7 +70,7 @@ class TypeInferer:
 
     @visitor.when(FuncDeclarationNode)
     def visit(self, node, scope):
-        self.current_method = self.current_type.get_method(node.id)
+        self.current_method = self.current_type.get_method(node.id.lex)
         return_type = self.current_method.return_type
 
         #print(len(scope.children), node.id)
@@ -142,7 +142,7 @@ class TypeInferer:
                     else:
                         var.type = expr_type
                         var.infered = self.check = True
-                        node.let_body[i] = (idx, var.type, exp)
+                        node.let_body[i] = (idx.lex, var.type, exp)
 
         self.visit(node.in_body, scope.children[-1], expected_type)
 
@@ -174,7 +174,7 @@ class TypeInferer:
     @visitor.when(AssignNode)
     def visit(self, node, scope, expected_type=None):
         var = scope.find_variable(
-            node.id) if scope.is_defined(node.id) else None
+            node.id.lex) if scope.is_defined(node.id.lex) else None
 
         self.visit(node.expression,
                    scope.children[0], var.type if var and var.infered else None)
@@ -197,7 +197,6 @@ class TypeInferer:
 
         node.static_type = self.bool_type
 
-    # chequear estas 2 clases despues
     @visitor.when(LessEqualNode)
     def visit(self, node, scope, expected_type=None):
         self.visit(node.left, scope.children[0], self.int_type)
@@ -247,7 +246,7 @@ class TypeInferer:
 
         if node.type:
             try:
-                node_type = self.context.get_type(node.type)
+                node_type = self.context.get_type(node.type.lex)
             except SystemError as err:
                 node_type = ErrorType()
             else:
@@ -260,7 +259,7 @@ class TypeInferer:
         try:
             obj_type = node_type if node_type else obj_type
 
-            obj_method = obj_type.get_method(node.id)
+            obj_method = obj_type.get_method(node.id.lex)
 
             node_type = obj_type if isinstance(
                 obj_method.return_type, SelfType) else obj_method.return_type
@@ -283,7 +282,7 @@ class TypeInferer:
         obj_type = self.current_type
 
         try:
-            obj_method = obj_type.get_method(node.id)
+            obj_method = obj_type.get_method(node.id.lex)
 
             node_type = obj_type if isinstance(
                 obj_method.return_type, SelfType) else obj_method.return_type
@@ -303,7 +302,7 @@ class TypeInferer:
     @visitor.when(NewNode)
     def visit(self, node, scope, expected_type=None):
         try:
-            node_type = self.context.get_type(node.type)
+            node_type = self.context.get_type(node.type.lex)
         except SemanticError:
             node_type = ErrorType()
 
@@ -319,8 +318,8 @@ class TypeInferer:
 
     @visitor.when(IdNode)
     def visit(self, node, scope, expected_type=None):
-        if scope.is_defined(node.lex):
-            var = scope.find_variable(node.lex)
+        if scope.is_defined(node.token.lex):
+            var = scope.find_variable(node.token.lex)
 
             if expected_type and not var.infered:
                 if isinstance(expected_type, ErrorType) or isinstance(expected_type, SelfType):

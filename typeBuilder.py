@@ -119,4 +119,5 @@ class TypeBuilder:
             self.current_type.define_method(
                 node.id.lex, arg_names, arg_types, ret_type)
         except SemanticError as ex:
-            self.errors.append(ERROR % (node.type.line, node.type.column)  ex.text)
+            self.errors.append(
+                ERROR % (node.type.line, node.type.column) + ex.text)

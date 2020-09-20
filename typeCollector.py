@@ -5,6 +5,8 @@ from cmp.semantic import SelfType, AutoType, ErrorType
 from cmp.semantic import SemanticError
 from parser import ProgramNode, ClassDeclarationNode
 
+ERROR = '[Error] Linea %d: , Columna %d: '
+
 
 class TypeCollector(object):
     def __init__(self, errors=[]):
@@ -32,6 +34,6 @@ class TypeCollector(object):
     @visitor.when(ClassDeclarationNode)
     def visit(self, node):
         try:
-            self.context.create_type(node.id)
+            self.context.create_type(node.id.lex)
         except SemanticError as err:
-            self.errors.append(err)
+            self.errors.append(ERROR % (node.id.line, node.id.column) + err)
