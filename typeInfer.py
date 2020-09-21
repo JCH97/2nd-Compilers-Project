@@ -1,4 +1,4 @@
-from cmp import visitor, SelfType, AutoType, ErrorType
+from cmp import visitor, SelfType, AutoType, ErrorType, SemanticError
 from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
 
 
@@ -64,9 +64,8 @@ class TypeInferer:
                 elif isinstance(var, AutoType):
                     pass
                 else:
-                    var_type = exp_type
                     var.infered = self.check = True
-                    attr_type = var_type
+                    attr.type = var.type = exp_type
 
     @visitor.when(FuncDeclarationNode)
     def visit(self, node, scope):
@@ -74,8 +73,7 @@ class TypeInferer:
         return_type = self.current_method.return_type
 
         #print(len(scope.children), node.id)
-        self.visit(node.body, scope.children[0], self.current_type if isinstance(
-            return_type, SelfType) else return_type)
+        self.visit(node.body, scope.children[0], self.current_type if isinstance(return_type, SelfType) else return_type)
 
         body_type = node.body.static_type
 
@@ -261,8 +259,7 @@ class TypeInferer:
 
             obj_method = obj_type.get_method(node.id.lex)
 
-            node_type = obj_type if isinstance(
-                obj_method.return_type, SelfType) else obj_method.return_type
+            node_type = obj_type if isinstance(obj_method.return_type, SelfType) else obj_method.return_type
 
         except SemanticError:
             node_type = ErrorType()
@@ -284,8 +281,7 @@ class TypeInferer:
         try:
             obj_method = obj_type.get_method(node.id.lex)
 
-            node_type = obj_type if isinstance(
-                obj_method.return_type, SelfType) else obj_method.return_type
+            node_type = obj_type if isinstance(obj_method.return_type, SelfType) else obj_method.return_type
         except SemanticError:
             node_type = ErrorType()
             obj_method = None

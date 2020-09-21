@@ -79,8 +79,8 @@ class LetInNode(ExpressionNode):
     def __init__(self, let_body, in_body):
         self.let_body = let_body
         self.in_body = in_body
-        self.line = let_in.line
-        self.column = let_in.column
+        self.line = in_body.line
+        self.column = in_body.column
 
 
 class CaseOfNode(ExpressionNode):

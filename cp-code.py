@@ -98,10 +98,9 @@ def run_pipeline(text):
     #print([t.token_type for t in tokens])
     parse, operations = CoolParser(tokens)
     if not operations:  # error y el Token donde se detecto el error viene en parse
-        print(
-            f'Unexpected token "{parse.lex}" in line "{parse.line}" and column "{parse.column}"')
+        print(f'Unexpected token "{parse.lex}" in line "{parse.line}" and column "{parse.column}"')
         return
-    print('\n'.join(repr(x) for x in parse))
+    # print('\n'.join(repr(x) for x in parse))
     print('==================== AST ======================')
     ast = evaluate_reverse_parse(parse, operations, tokens)
     formatter = FormatVisitor()

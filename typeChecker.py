@@ -10,7 +10,7 @@ INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
 VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
 INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
 CYCLIC_HERITAGE = 'Type "%s" froms a cyclic heritage chain'
-ERROR = '[Error] Linea %d: , Columna %d: '
+ERROR = 'Linea %d: , Columna %d: '
 
 
 class TypeChecker:
@@ -47,8 +47,7 @@ class TypeChecker:
         parent = self.current_type.parent
         while parent:
             if parent == self.current_type:
-                self.errors.append(
-                    ERROR % (node.line, node.column) + CYCLIC_HERITAGE % (parent.name))
+                self.errors.append(ERROR % (node.line, node.column) + CYCLIC_HERITAGE % (parent.name))
                 self.current_type.parent = self.object_type
                 break
             parent = parent.parent
@@ -70,12 +69,10 @@ class TypeChecker:
             expr_type = node.expression.static_type  # static type of the expression
 
             node_type = self.current_type.get_attribute(node.id.lex).type
-            node_type = self.current_type if isinstance(
-                node_type, SelfType) else node_type
+            node_type = self.current_type if isinstance(node_type, SelfType) else node_type
 
             if not expr_type.conforms_to(node_type):
-                self.errors.append(ERROR % (node.expression.line, node.expression.column) +
-                                   INCOMPATIBLE_TYPES % (expr_type.name, node_type.name))
+                self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES % (expr_type.name, node_type.name))
 
     # <id> (<id> : <type> , ..., <id> : <type>): <type> {
     #   <expr>
@@ -95,8 +92,7 @@ class TypeChecker:
                 pass
             else:
                 if parent_method.param_types != self.current_method.param_types or parent_method.return_type != self.current_method.return_type:
-                    self.errors.append(ERROR % (node.line, node.column) + WRONG_SIGNATURE % (
-                        self.current_method.name, self.current_type.name, parent.name))
+                    self.errors.append(ERROR % (node.line, node.column) + WRONG_SIGNATURE % ( self.current_method.name, self.current_type.name, parent.name))
 
         # zip empareja uno con uno y crea y array de tuplas
         # a = [1, 2, 3]  b = ['a', 'b', 'c']  => zip(a, b) = [(1, 'a'), (2, 'b'), (3, 'c')]
@@ -106,12 +102,10 @@ class TypeChecker:
         self.visit(node.body, scope.create_child())
 
         body_type = node.body.static_type
-        return_type = self.current_type if isinstance(
-            self.current_method.return_type, SelfType) else self.current_method.return_type
+        return_type = self.current_type if isinstance(self.current_method.return_type, SelfType) else self.current_method.return_type
 
         if not body_type.conforms_to(return_type):
-            self.errors.append(ERROR % (node.body.line, node.body.column) + INCOMPATIBLE_TYPES %
-                               (body_type.name, return_type.name))
+            self.errors.append(ERROR % (node.body.line, node.body.column) + INCOMPATIBLE_TYPES % (body_type.name, return_type.name))
 
     # if <expr> then <expr> else <expr> fi
     @visitor.when(IfThenElseNode)
@@ -120,8 +114,7 @@ class TypeChecker:
 
         condition_type = node.condition.static_type
         if not condition_type.conforms_to(self.bool_type):
-            self.errors.append(ERROR % (node.condition.line, node.condition.column) +
-                               INCOMPATIBLE_TYPES % (condition_type.name, self.bool_type.name))
+            self.errors.append(ERROR % (node.condition.line, node.condition.column) + INCOMPATIBLE_TYPES % (condition_type.name, self.bool_type.name))
 
         self.visit(node.if_body, scope.create_child())
         self.visit(node.else_body, scope.create_child())
@@ -137,8 +130,7 @@ class TypeChecker:
 
         condition_type = node.condition.static_type
         if not condition_type.conforms_to(self.bool_type):
-            self.errors.append(INCOMPATIBLE_TYPES %
-                               (condition_type.name, self.bool_type.name))
+            self.errors.append(INCOMPATIBLE_TYPES % (condition_type.name, self.bool_type.name))
 
         self.visit(node.body, scope.create_child())
 
@@ -155,30 +147,26 @@ class TypeChecker:
     # let <id1> : <type1> [ <- <expr1> ], ..., <idn> : <typen> [ <- <exprn> ] in <expr>
     @visitor.when(LetInNode)
     def visit(self, node, scope):
-        child_scope = scope.create_child()
-
         for idx, typex, exp in node.let_body:
             try:
                 node_type = self.context.get_type(typex.lex)
             except SemanticError as err:
-                self.errors.append(
-                    ERROR % (typex.line, typex.column) + ex.text)
+                self.errors.append(ERROR % (typex.line, typex.column) + ex.text)
                 node_type = ErrorType()
 
-            id_type = self.current_type if isinstance(
-                node_type, SelfType) else node_type
+            id_type = self.current_type if isinstance(node_type, SelfType) else node_type
+            child_scope = scope.create_child()
 
             if exp:
-                self.visit(exp, scope.create_child())
+                self.visit(exp, child_scope)
                 exp_type = exp.static_type
 
                 if not exp_type.conforms_to(id_type):
-                    self.errors.append(ERROR % (exp.line, exp.column) + INCOMPATIBLE_TYPES %
-                                       (exp_type.name, id_type.name))
+                    self.errors.append(ERROR % (exp.line, exp.column) + INCOMPATIBLE_TYPES % (exp_type.name, id_type.name))
 
-            child_scope.define_variable(idx.lex, id_type)
+            scope.define_variable(idx.lex, id_type)
 
-        self.visit(node.in_body, child_scope)
+        self.visit(node.in_body, scope.create_child())
         node.static_type = node.in_body.static_type
 
     # case <expr0> of
@@ -200,20 +188,17 @@ class TypeChecker:
                 node_type = ErrorType()
             else:
                 if isinstance(node_type, SelfType):
-                    self.errors.append(ERROR % (typex.line, typex.column) +
-                                       f'Type "{node_type.name}" cannot be used as case branch type')
+                    self.errors.append(ERROR % (typex.line, typex.column) + f'Type "{node_type.name}" cannot be used as case branch type')
                     node_type = ErrorType()
 
-            id_type = self.current_type if isinstance(
-                node_type, SelfType) else node_type
+            id_type = self.current_type if isinstance(node_type, SelfType) else node_type
 
             child_scope = scope.create_child()
             child_scope.define_variable(idx.lex, id_type)
             self.visit(expr, child_scope)
             expr_type = expr.static_type
 
-            node.static_type = node.static_type.type_union(
-                expr_type) if node.static_type else expr_type
+            node.static_type = node.static_type.type_union(expr_type) if node.static_type else expr_type
 
     # <id> <- <expression>
     @visitor.when(AssignNode)
@@ -226,14 +211,11 @@ class TypeChecker:
             node_type = var.type
 
             if var.name == 'self':
-                self.errors.append(
-                    ERROR % (node.id.line, node.id.column) + SELF_IS_READONLY)
+                self.errors.append(ERROR % (node.id.line, node.id.column) + SELF_IS_READONLY)
             elif not exp_type.conforms_to(node_type):
-                self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES %
-                                   (exp_type.name, node_type.name))
+                self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES % (exp_type.name, node_type.name))
         else:
-            self.errors.append(ERROR % (node.id.line, node.id.column) + VARIABLE_NOT_DEFINED) % (
-                node.id.lex, self.current_method.name)
+            self.errors.append(ERROR % (node.id.line, node.id.column) + VARIABLE_NOT_DEFINED) % (node.id.lex, self.current_method.name)
 
         node.static_type = exp_type
 
@@ -243,8 +225,7 @@ class TypeChecker:
         expr_type = node.expression.static_type
 
         if not expr_type.conforms_to(self.bool_type):
-            self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES %
-                               (expr_type.name, self.bool_type.name))
+            self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES % (expr_type.name, self.bool_type.name))
 
         node.static_type = self.bool_type
 
@@ -255,15 +236,13 @@ class TypeChecker:
         left_type = node.left.static_type
 
         if not left_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION %
-                               (left_type.name, self.int_type.name))
+            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION % (left_type.name, self.int_type.name))
 
         self.visit(node.right, scope.create_child())
         right_type = node.right.static_type
 
         if not right_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.right.line, node.right.column) + INVALID_OPERATION %
-                               (right_type.name, self.int_type.name))
+            self.errors.append(ERROR % (node.right.line, node.right.column) + INVALID_OPERATION % (right_type.name, self.int_type.name))
 
         node.static_type = self.bool_type
 
@@ -274,15 +253,13 @@ class TypeChecker:
         left_type = node.left.static_type
 
         if not left_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION %
-                               (left_type.name, self.int_type.name))
+            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION % (left_type.name, self.int_type.name))
 
         self.visit(node.right, scope.create_child())
         right_type = node.right.static_type
 
         if not right_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.right.line, node.right.column) + INVALID_OPERATION %
-                               (right_type.name, self.int_type.name))
+            self.errors.append(ERROR % (node.right.line, node.right.column) + INVALID_OPERATION % (right_type.name, self.int_type.name))
 
         node.static_type = self.bool_type
 
@@ -299,14 +276,11 @@ class TypeChecker:
         if isinstance(left_type, AutoType) or isinstance(right_type, AutoType):
             pass
         elif left_type.conforms_to(self.int_type) ^ right_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION %
-                               (left_type.name, right_type.name))
+            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION % (left_type.name, right_type.name))
         elif left_type.conforms_to(self.string_type) ^ right_type.conforms_to(self.string_type):
-            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION %
-                               (left_type.name, right_type.name))
+            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION % (left_type.name, right_type.name))
         elif left_type.conforms_to(self.bool_type) ^ right_type.conforms_to(self.bool_type):
-            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION %
-                               (left_type.name, right_type.name))
+            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION % (left_type.name, right_type.name))
 
         node.static_type = self.bool_type
 
@@ -319,8 +293,7 @@ class TypeChecker:
         right_type = node.right.static_type
 
         if not left_type.conforms_to(self.int_type) or not right_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION %
-                               (left_type.name, right_type.name))
+            self.errors.append(ERROR % (node.left.line, node.left.column) + INVALID_OPERATION % (left_type.name, right_type.name))
 
         node.static_type = self.int_type
 
@@ -337,8 +310,7 @@ class TypeChecker:
 
         expr_type = node.expression.static_type
         if not expr_type.conforms_to(self.int_type):
-            self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES %
-                               (expr_type.name, self.int_type.name))
+            self.errors.append(ERROR % (node.expression.line, node.expression.column) + INCOMPATIBLE_TYPES % (expr_type.name, self.int_type.name))
 
         node.static_type = self.int_type
 
@@ -355,13 +327,15 @@ class TypeChecker:
                 try:
                     node_type = self.context.get_type(node.type.lex)
                 except SemanticError as err:
-                    self.errors.append(
-                        ERROR % (node.type.line, node.type.column) + err.text)
+                    self.errors.append(ERROR % (node.type.line, node.type.column) + err.text)
                     node_type = ErrorType()
+                else:
+                    if isinstance(node_type, SelfType) or isinstance(node_type, AutoType):
+                        self.errors.append(ERROR_ON % (node.type.line, node.type.column) + f'Type "{node_type}" canot be used as type of a dispatch')
+                        node_type = ErrorType()
 
                 if not obj_type.conforms_to(node_type):
-                    self.errors.append(ERROR % (node.obj.line, node.obj.column) + INCOMPATIBLE_TYPES %
-                                       (obj_type.name, node_type.name))
+                    self.errors.append(ERROR % (node.obj.line, node.obj.column) + INCOMPATIBLE_TYPES % (obj_type.name, node_type.name))
 
                 obj_type = node_type
 
@@ -374,17 +348,13 @@ class TypeChecker:
                     arg_type = arg.static_type
 
                     if not arg_type.conforms_to(param_type):
-                        self.errors.append(ERROR % (node.args.line, node.args.column) + INCOMPATIBLE_TYPES %
-                                           (arg_type.name, param_type.name))
+                        self.errors.append(ERROR % (node.args.line, node.args.column) + INCOMPATIBLE_TYPES % (arg_type.name, param_type.name))
             else:
-                self.errors.append(ERROR % (node.args.line, node.args.column) +
-                                   f'Method {obj_method.name} of {obj_type} only accepts {len(obj_method.param_type)} argument(s)')
+                self.errors.append(ERROR % (node.args.line, node.args.column) + f'Method {obj_method.name} of {obj_type} only accepts {len(obj_method.param_type)} argument(s)')
 
-            node_type = obj_type if isinstance(
-                obj_method.return_type, SelfType) else obj_method.return_type
+            node_type = obj_type if isinstance(obj_method.return_type, SelfType) else obj_method.return_type
         except SemanticError as err:
-            self.errors.append(
-                ERROR % (node.type.line, node.type.column) + err.text)
+            self.errors.append(ERROR % (node.line, node.column) + err.text)
             node_type = ErrorType()
 
         node.static_type = node_type
@@ -392,6 +362,7 @@ class TypeChecker:
     @visitor.when(MemberCallNode)
     def visit(self, node, scope):
         obj_type = self.current_type
+        node_type = None
 
         try:
             method = obj_type.get_method(node.id.lex)
@@ -403,20 +374,16 @@ class TypeChecker:
                     arg_type = arg.static_type
 
                     if not arg_type.conforms_to(param_type):
-                        self.errors.append(INCOMPATIBLE_TYPES %
-                                           (arg_type.name, param_type.name))
+                        self.errors.append(INCOMPATIBLE_TYPES % (arg_type.name, param_type.name))
             else:
-                self.errors.append(ERROR % (node.args.line, node.args.column) +
-                                   f'Method {method.name} of {obj_type} only accepts {len(method.param_type)} argument(s)')
+                self.errors.append(ERROR % (node.args.line, node.args.column) + f'Method {method.name} of {obj_type} only accepts {len(method.param_type)} argument(s)')
 
-            node_type = obj_type if isinstance(
-                method.return_type, SelfType) else method.return_type
+            node_type = obj_type if isinstance(method.return_type, SelfType) else method.return_type
 
         except SemanticError as err:
-            self.errors.append(
-                ERROR % (node.id.line, node.id.column) + err.text)
+            self.errors.append(ERROR % (node.id.line, node.id.column) + err.text)
 
-        node.static_type = node_type
+        node.static_type = node_type if node_type else ErrorType()
 
     # new <type>
     @visitor.when(NewNode)
@@ -444,8 +411,7 @@ class TypeChecker:
             node_type = scope.find_variable(node.token.lex).type
         else:
             node_type = ErrorType()
-            self.errors.append(ERROR % (node.token.line, node.token.column) + VARIABLE_NOT_DEFINED %
-                               (node.token.lex, self.current_method.name))
+            self.errors.append(ERROR % (node.token.line, node.token.column) + VARIABLE_NOT_DEFINED % (node.token.lex, self.current_method.name))
 
         node.static_type = node_type
 

@@ -3,7 +3,7 @@ import cmp.visitor as visitor
 from cmp.semantic import AutoType, SelfType, ErrorType, SemanticError
 from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
 
-ERROR = '[Error] Linea %d: , Columna %d: '
+ERROR = 'Linea %d: , Columna %d: '
 
 
 class TypeBuilder:
@@ -34,18 +34,14 @@ class TypeBuilder:
         self.object_type.define_method('type_name', [], [], self.string_type)
         self.object_type.define_method('copy', [], [], SelfType())
 
-        self.io_type.define_method('out_string', ['x'], [
-                                   self.string_type], SelfType())
-        self.io_type.define_method(
-            'out_int', ['x'], [self.int_type], SelfType())
+        self.io_type.define_method('out_string', ['x'], [self.string_type], SelfType())
+        self.io_type.define_method('out_int', ['x'], [self.int_type], SelfType())
         self.io_type.define_method('in_string', [], [], self.string_type)
         self.io_type.define_method('in_int', [], [], self.int_type)
 
         self.string_type.define_method('length', [], [], self.int_type)
-        self.string_type.define_method(
-            'concat', ['s'], [self.string_type], self.string_type)
-        self.string_type.define_method(
-            'substr', ['i', 'l'], [self.int_type, self.int_type], self.string_type)
+        self.string_type.define_method('concat', ['s'], [self.string_type], self.string_type)
+        self.string_type.define_method('substr', ['i', 'l'], [self.int_type, self.int_type], self.string_type)
 
     @visitor.on('node')
     def visit(self, node):
@@ -59,8 +55,7 @@ class TypeBuilder:
         try:
             self.context.get_type('Main').get_method('main')
         except SemanticError:
-            self.errors.append(
-                ERROR % (node.line, node.column) + 'The class "Main" and its method "main" are needed.')
+            self.errors.append(ERROR % (node.line, node.column) + 'The class "Main" and its method "main" are needed.')
 
     @visitor.when(ClassDeclarationNode)
     def visit(self, node):
@@ -71,8 +66,7 @@ class TypeBuilder:
                 parent_type = self.context.get_type(node.parent.lex)
                 self.current_type.set_parent(parent_type)
             except SemanticError as ex:
-                self.errors.append(
-                    ERROR % (node.parent.line, node.parent.column) + ex.text)
+                self.errors.append(ERROR % (node.parent.line, node.parent.column) + ex.text)
         else:
             self.current_type.set_parent(self.object_type)
 
@@ -84,15 +78,13 @@ class TypeBuilder:
         try:
             attr_type = self.context.get_type(node.type.lex)
         except SemanticError as ex:
-            self.errors.append(
-                ERROR % (node.type.line, node.type.column) + ex.text)
+            self.errors.append(ERROR % (node.type.line, node.type.column) + ex.text)
             attr_type = ErrorType()
 
         try:
             self.current_type.define_attribute(node.id.lex, attr_type)
         except SemanticError as ex:
-            self.errors.append(
-                ERROR % (node.id.line, node.id.column) + ex.text)
+            self.errors.append(ERROR % (node.id.line, node.id.column) + ex.text)
 
     @visitor.when(FuncDeclarationNode)
     def visit(self, node):
@@ -101,9 +93,12 @@ class TypeBuilder:
             try:
                 arg_type = self.context.get_type(typex.lex)
             except SemanticError as ex:
-                self.errors.append(
-                    ERROR % (typex.line, typex.column) + ex.text)
+                self.errors.append(ERROR % (typex.line, typex.column) + ex.text)
                 arg_type = ErrorType()
+            else:
+                if isinstance(arg_type, SelfType):
+                    self.errors.append(ERROR_ON % (typex.line, typex.column) + f'Type "{arg_type.name}" canot be used as parameter type')
+                    arg_type = ErrorType()
 
             arg_names.append(idx.lex)
             arg_types.append(arg_type)
@@ -111,13 +106,10 @@ class TypeBuilder:
         try:
             ret_type = self.context.get_type(node.type.lex)
         except SemanticError as ex:
-            self.errors.append(
-                ERROR % (node.type.line, node.type.column) + ex.text)
+            self.errors.append(ERROR % (node.type.line, node.type.column) + ex.text)
             ret_type = ErrorType()
 
         try:
-            self.current_type.define_method(
-                node.id.lex, arg_names, arg_types, ret_type)
+            self.current_type.define_method(node.id.lex, arg_names, arg_types, ret_type)
         except SemanticError as ex:
-            self.errors.append(
-                ERROR % (node.type.line, node.type.column) + ex.text)
+            self.errors.append(ERROR % (node.type.line, node.type.column) + ex.text)

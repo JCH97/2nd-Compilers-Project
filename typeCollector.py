@@ -5,7 +5,7 @@ from cmp.semantic import SelfType, AutoType, ErrorType
 from cmp.semantic import SemanticError
 from parser import ProgramNode, ClassDeclarationNode
 
-ERROR = '[Error] Linea %d: , Columna %d: '
+ERROR = 'Linea %d: , Columna %d: '
 
 
 class TypeCollector(object):
