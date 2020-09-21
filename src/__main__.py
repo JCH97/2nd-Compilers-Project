@@ -1,6 +1,9 @@
 import eel
-from .cool import *
 
-if __name__ == '__main__':
-    print(literals)
-    
+eel.init('public')
+
+@eel.expose
+def handler(code: str):
+    print(code)
+
+eel.start('index.html')

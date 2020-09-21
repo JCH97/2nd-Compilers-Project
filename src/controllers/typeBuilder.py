@@ -1,7 +1,6 @@
-import cmp.visitor as visitor
-
-from cmp.semantic import AutoType, SelfType, ErrorType, SemanticError
-from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
+from .cmp import visitor
+from .cmp import AutoType, SelfType, ErrorType, SemanticError
+from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
 
 ERROR = 'Linea %d: , Columna %d: '
 

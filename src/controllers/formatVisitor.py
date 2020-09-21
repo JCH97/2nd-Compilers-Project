@@ -1,14 +1,5 @@
-import cmp.visitor as visitor
-from cmp.semantic import SemanticError
-from cmp.semantic import Attribute, Method, Type
-from cmp.semantic import SelfType, AutoType, ErrorType
-from cmp.semantic import Context, Scope
-from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
-from parser import MemberCallNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode
-from parser import AssignNode, UnaryNode, BinaryNode
-from parser import FunctionCallNode, NewNode, AtomicNode
-from parser import CoolGrammar, CoolParser
-from lexer import tokenizer
+from .cmp import visitor, SemanticError, Attribute, Method, Type, SelfType, AutoType, ErrorType, Context, Scope
+from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
 
 
 class FormatVisitor:
