@@ -1,3 +1,5 @@
+#init from cmp
+
 from .automata import *
 from .evaluation import *
 from .grammartools import *
