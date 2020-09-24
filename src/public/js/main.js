@@ -9,9 +9,14 @@ const vue = new Vue({
     },
     methods: {
         run: function () {
+            if (!this.code)
+                this.code = document.querySelector("#writteCode").value;
+
             eel.handler(this.code)().then(data => {
                 this.errors = data.errors;
-                this.context = data.context;
+                
+                if (data.context)
+                    this.context = data.context;
             })
         },
         selectCode: function () {
@@ -23,6 +28,6 @@ const vue = new Vue({
             fr.onload = (function () {
                 this.code = fr.result;
             }).bind(this);
-        }
+        },
     },
 });
