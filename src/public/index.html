@@ -1,23 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Cool Inferer Types</title>
 </head>
+
 <body>
 
-    <div id="app">        
-        <h1>Works!!!</h1>
-        <h1>{{ msg }}</h1>
-    </div>
+    <div id="app">
 
+
+        <input type="file" ref="file" accept=".cl" name="code" id="code" @change="selectCode()" />
+        <button @click="run">Compile</button>
+ 
+        <div v-for="(e, indx) in errors" :key="indx">
+            <li>
+                {{ e }}
+            </li>
+        </div>
+
+    </div>
 
     <script src="/eel.js"></script>
     <script src="./js/vue.js"></script>
     <script src="./js/main.js"></script>
-    <script>
-        // eel.handler("Test")
-    </script>
 </body>
+
 </html>

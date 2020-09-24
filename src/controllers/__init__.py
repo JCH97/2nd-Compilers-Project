@@ -4,4 +4,5 @@ from .formatVisitor import FormatVisitor
 from .typeBuilder import TypeBuilder
 from .typeChecker import TypeChecker
 from .typeCollector import TypeCollector
-from .typeInfer import TypeInferer 
+from .typeInfer import TypeInferer
+from .cmp import evaluate_reverse_parse

@@ -1,4 +1,4 @@
-from .cmp import Grammar, LR1Parser
+from .cmp import Grammar, LR1Parser, evaluate_reverse_parse
 
 # AST Classes
 
