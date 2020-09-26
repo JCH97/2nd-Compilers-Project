@@ -14,12 +14,17 @@ const vue = new Vue({
 
             eel.handler(this.code)().then(data => {
                 this.errors = data.errors;
-                
+
                 if (data.context)
                     this.context = data.context;
+
+                document.querySelector("#context").value = data.context;
             })
+
         },
         selectCode: function () {
+            this.code = "";
+            
             let input = document.querySelector("#code");
             let file = input.files[0];
             let fr = new FileReader();

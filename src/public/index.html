@@ -15,13 +15,15 @@
         <input type="file" ref="file" accept=".cl" name="code" id="code" @change="selectCode()" />
         <button @click="run">Compile</button>
 
-        <textarea name="writteCode" id="writteCode" cols="30" rows="10"></textarea>
+        <!-- <textarea name="writteCode" id="writteCode" cols="30" rows="10"></textarea> -->
 
         <div v-for="(e, indx) in errors" :key="indx">
             <li>
                 {{ e }}
             </li>
         </div>
+
+        <textarea name="context" id="context" cols="50" rows="30" disabled="true"></textarea>
 
     </div>
 
