@@ -17,7 +17,15 @@
 
         <!-- <textarea name="writteCode" id="writteCode" cols="30" rows="10"></textarea> -->
 
+        <h3>Errors:</h3>
         <div v-for="(e, indx) in errors" :key="indx">
+            <li>
+                {{ e }}
+            </li>
+        </div>
+
+        <h3>Inference:</h3>
+        <div v-for="(e, indx) in inference" :key="indx">
             <li>
                 {{ e }}
             </li>

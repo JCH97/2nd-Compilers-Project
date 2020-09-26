@@ -2,6 +2,7 @@ const vue = new Vue({
     el: "#app",
     data: {
         errors: [],
+        inference: [],
         context: "",
         code: ""
     },
@@ -15,8 +16,10 @@ const vue = new Vue({
             eel.handler(this.code)().then(data => {
                 this.errors = data.errors;
 
-                if (data.context)
+                if (data.context) {
                     this.context = data.context;
+                    this.inference = data.inference;
+                }
 
                 document.querySelector("#context").value = data.context;
             })

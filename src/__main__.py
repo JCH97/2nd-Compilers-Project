@@ -45,16 +45,16 @@ def _checkingTypes(context, ast, errors = []):
 
     return (comment, scope)
 
-def _infererTypes(context, ast, scope, errors = []):
+def _infererTypes(context, ast, scope, errors: list = [], inference: list = []):
     comment = '============== INFERINING TYPES ==============='
-    inferer = TypeInferer(context, errors)
+    inferer = TypeInferer(context, errors, inference)
     while inferer.visit(ast, scope): pass
 
     return comment
     
 @eel.expose
 def handler(code: str):
-    errors = []
+    errors: list = []
 
     comment_tokenizer, tokens = _tokenizer(code)
     comment_parser, parser, operations = _parse(tokens, errors)
@@ -69,16 +69,21 @@ def handler(code: str):
     comment_collecting, context = _collectingTypes(ast, errors)
     comment_building = _buildingTypes(context, ast, errors)
     comment_checking, scope = _checkingTypes(context, ast, errors)
-    comment_inferer  = _infererTypes(context, ast, scope, errors)
+
+    inference: list = []
+    
+    comment_inferer  = _infererTypes(context, ast, scope, errors, inference)
 
     return {
         'errors': errors,
-        'context': context.__repr__()
+        'context': context.__str__(),
+        'inference': inference
     }
 
 eel.start('index.html')
 
 # if __name__ == '__main__':
-#     file = open('./test/2.cl')
-#     handler(file.read())
-#     file.close()
+#     from pathlib import Path
+    
+#     code = (Path.cwd() / 'test' / '3.cl').read_text()
+#     handler(code)
