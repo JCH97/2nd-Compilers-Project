@@ -6,7 +6,7 @@ ERROR = 'Linea %d: , Columna %d: '
 
 
 class TypeCollector(object):
-    def __init__(self, errors=[]):
+    def __init__(self, errors = []):
         self.context = Context()
         self.errors = errors
 
