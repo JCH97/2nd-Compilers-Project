@@ -61,7 +61,7 @@ def handler(code: str):
 
     if len(errors):
         return {
-            'errors': errors
+            'errors': 'Errors:\n' + '.\n'.join(e for e in errors),
         }
 
     ast = _getAST(parser, operations, tokens)
@@ -75,9 +75,9 @@ def handler(code: str):
     comment_inferer  = _infererTypes(context, ast, scope, errors, inference)
 
     return {
-        'errors': errors,
-        'context': context.__str__(),
-        'inference': inference
+        'errors': 'Errors:\n' + '.\n'.join(e for e in errors),
+        'context': 'Context:\n' + context.__str__(),
+        'inference': 'Inference:\n' + '.\n'.join(i for i in inference)
     }
 
 eel.start('index.html')
@@ -85,5 +85,5 @@ eel.start('index.html')
 # if __name__ == '__main__':
 #     from pathlib import Path
     
-#     code = (Path.cwd() / 'test' / '3.cl').read_text()
+#     code = (Path.cwd() / 'test' / '2.cl').read_text()
 #     handler(code)

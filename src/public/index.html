@@ -5,34 +5,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cool Inferer Types</title>
+
+    <link rel="stylesheet" href="./css/w3.css">
+    <style>
+        textarea {
+            border: none;
+            overflow: auto;
+            outline: none;
+
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+            box-shadow: none;
+
+            resize: none;
+
+            width: 100%;
+            height: 100%;
+        }
+
+        textarea#code {
+            background-image: url("img/numb.png");
+            background-attachment: local;
+            background-repeat: no-repeat;
+            padding-left: 50px;
+            padding-top: 10px;
+            border-color: #ccc;
+            background-size: 35px;
+        }
+        
+    </style>
 </head>
 
 <body>
-
-    <div id="app">
-
-
-        <input type="file" ref="file" accept=".cl" name="code" id="code" @change="selectCode()" />
-        <button @click="run">Compile</button>
-
-        <!-- <textarea name="writteCode" id="writteCode" cols="30" rows="10"></textarea> -->
-
-        <h3>Errors:</h3>
-        <div v-for="(e, indx) in errors" :key="indx">
-            <li>
-                {{ e }}
-            </li>
+    
+    <div id="app" class="w3-container w3-padding-16">
+        
+        <input class="w3-input w3-third" type="file" ref="file" accept=".cl" name="codeChoose" id="codeChoose" @change="selectCode"/>
+        
+        <button @click="run">Run</button>
+        
+        <div class="w3-row w3-row-padding">
+            <div class="w3-col m6">
+                <div class="w3-card-2">
+                    <textarea name="code" id="code" cols="69" rows="30" autofocus></textarea>
+                </div>
+            </div>
+            <div class="w3-col m6">
+                <div class="w3-card-2">
+                    <textarea name="result" id="result" cols="69" rows="30" disabled="true"></textarea>
+                </div>
+            </div>
         </div>
-
-        <h3>Inference:</h3>
-        <div v-for="(e, indx) in inference" :key="indx">
-            <li>
-                {{ e }}
-            </li>
-        </div>
-
-        <textarea name="context" id="context" cols="50" rows="30" disabled="true"></textarea>
-
     </div>
 
     <script src="/eel.js"></script>
