@@ -52,7 +52,7 @@ class TypeChecker:
                 break
             parent = parent.parent
 
-        # define las variables de la clase [las variables(que son los atributos) que se definiero en typeBuilder]
+        # define las variables de la clase [las variables(que son los atributos) que se definieron en typeBuilder]
         for attr in self.current_type.attributes:
             scope.define_variable(attr.name, attr.type)
 

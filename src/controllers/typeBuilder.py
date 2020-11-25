@@ -11,7 +11,6 @@ class TypeBuilder:
         self.current_type = None
         self.errors = errors
 
-        # Building built-in types
         self.object_type = self.context.get_type('Object')
 
         self.io_type = self.context.get_type('IO')
