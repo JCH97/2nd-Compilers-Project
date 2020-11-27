@@ -1,5 +1,5 @@
 from .pycompiler import EOF
-from .grammartools import ShiftReduceParser, Action
+from .grammar import ShiftReduceParser, Action
 
 
 def evaluate_reverse_parse(right_parse, operations, tokens):

@@ -14,7 +14,7 @@ def _parse(tokens, errors = []):
     parse, operations = CoolParser(tokens)
 
     if not operations:
-        errors.append(f'Unexpected token "{parse.lex}" in line "{parse.line}" and column "{parse.column}"')
+        errors.append(f'Parse Error: Unexpected token "{parse.lex}" in line "{parse.line}" and column "{parse.column}". Suggestion: check ";" in end of class and methods.')
         return (comment, None, None)
     
     return (comment, parse, operations)
@@ -55,6 +55,7 @@ def _infererTypes(context, ast, scope, errors: list = [], inference: list = []):
 @eel.expose
 def handler(code: str):
     errors: list = []
+    # print(code)
 
     comment_tokenizer, tokens = _tokenizer(code)
     comment_parser, parser, operations = _parse(tokens, errors)

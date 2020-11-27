@@ -1,11 +1,6 @@
-from .cmp import visitor, SelfType, AutoType, ErrorType, SemanticError, Scope, VariableInfo, Method, Type
-from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
-
-INFERENCE = 'Inference Ln: %d, Col: %d. '
-INFERENCE_ATTR = 'On class "%s", attribute "%s": type "%s". '
-INFERENCE_PARAM = 'On method "%s" in class "%s", param "%s": type "%s". '
-INFERENCE_RETURN = 'Return of method "%s" in class "%s", type "%s". '
-INFERENCE_VAR = 'Varible "%s": type "%s". '
+from cmp import visitor, SelfType, AutoType, ErrorType, SemanticError, Scope, VariableInfo, Method, Type
+from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
+from messages import INFERENCE, INFERENCE_ATTR, INFERENCE_PARAM, INFERENCE_RETURN, INFERENCE_VAR
 
 class TypeInferer:
     def __init__(self, contxt, errors = [], inference: list = []):
@@ -82,16 +77,29 @@ class TypeInferer:
         body_type = node.body.static_type
 
         # recorrido por los parametros del metodo, se visita de uno en adelante xq locaĺ[0] = self
-        for i, var in enumerate(scope.locals[1:]):
+        for i, var in enumerate(scope.locals[1:]): 
             if not var.infered:
                 if isinstance(var.type, ErrorType) or isinstance(var.type, AutoType):
                     pass
                 else:
-                    var.infered = self.check = True
+                    var.infered = self.check = True                    
                     self.current_method.param_types[i] = var.type
+
                     self.inference.append(INFERENCE_PARAM % (self.current_method.name, self.current_type.name, var.name, var.type.name))
             elif not isinstance(var.type, ErrorType) :
                 self.current_method.param_types[i] = var.type
+            
+            # for varInfo in self.current_method.param_infos:
+            #     if varInfo.name == f'_{node.id.lex}_{i}':
+            #         varInfo.type = var.type
+            
+            # Update param_infos
+            for indx, name in enumerate(self.current_method.param_names):
+                if self.current_method.param_infos[indx].name == f'_{self.current_method.name}_{name}' and isinstance(self.current_method.param_infos[indx].type, AutoType):
+                    self.current_method.param_infos[indx].type = self.current_method.param_types[indx]
+                    self.current_method.param_infos[indx].infered = True
+
+
 
         var: VariableInfo = self.current_method.return_info
         if not var.infered:
@@ -114,7 +122,7 @@ class TypeInferer:
         if_type = node.if_body.static_type
         else_type = node.else_body.static_type
         
-        node.static_type = if_type.type_union(else_type)
+        node.static_type = if_type.join_type(else_type)
 
     @visitor.when(WhileLoopNode)
     def visit(self, node: WhileLoopNode, scope: Scope, expected_type = None):
@@ -174,7 +182,7 @@ class TypeInferer:
             self.visit(exp, child_scope)
             exp_type = exp.static_type
 
-            node.static_type = node.static_type.type_union(exp_type) if node.static_type else exp_type
+            node.static_type = node.static_type.join_type(exp_type) if node.static_type else exp_type
 
     @visitor.when(AssignNode)
     def visit(self, node: AssignNode, scope: Scope, expected_type = None):
@@ -187,7 +195,7 @@ class TypeInferer:
             if isinstance(expr_type, ErrorType) or isinstance(var.type, ErrorType) or isinstance(expr_type, AutoType):
                 pass
             else:
-                var.type = expr_type if isinstance(var.type, AutoType) else var.type.type_union(expr_type)
+                var.type = expr_type if isinstance(var.type, AutoType) else var.type.join_type(expr_type)
                 self.inference.append(INFERENCE % (node.line, node.column) + INFERENCE_VAR % (var.name, var.type.name))
 
         node.static_type = expr_type
@@ -329,7 +337,7 @@ class TypeInferer:
                     pass
                 elif isinstance(var.type, AutoType):
                     var.type = expected_type
-                    var.infered = True
+                    var.infered = self.check = True
                     self.inference.append(INFERENCE % (node.line, node.column) +  INFERENCE_VAR % (node.token.lex, var.type.name))
                 elif not var.type.conforms_to(expected_type):
                     var.type = expected_type if expected_type.conforms_to(var.type) else ErrorType()

@@ -49,23 +49,22 @@ class Type:
             raise SemanticError(f'Parent type "{parent.name}" is sealed. Can\'t inherit from it.')
         self.parent = parent
 
-    def type_union(self, other):
+    def join_type(self, other):
         if self == other:
             return other if not isinstance(other, AutoType) else self
 
-        t1 = [self]
-        while t1[-1] != None:
-            t1.append(t1[-1].parent)
+        p1, p2 = [self], [other]
+        while p1[-1] != None:
+            p1.append(p1[-1].parent)
 
-        t2 = [other]
-        while t2[-1] != None:
-            t2.append(t2[-1].parent)
+        while p2[-1] != None:
+            p2.append(p2[-1].parent)
 
-        while t1[-2] == t2[-2]:
-            t1.pop()
-            t2.pop()
+        while p1[-2] == p2[-2]:
+            p1.pop()
+            p2.pop()
 
-        return t1[-1]
+        return p1[-1]
 
     def get_attribute(self, name:str):
         try:
@@ -102,7 +101,6 @@ class Type:
     def define_method(self, name:str, param_names:list, param_types:list, return_type):
         if name in self.methods:
             raise SemanticError(f'Method "{name}" already defined in {self.name}')
-            # raise SemanticError(f'Method "{name}" already defined in {self.name} with a different signature.')
 
         method = self.methods[name] = Method(name, param_names, param_types, return_type)
         return method

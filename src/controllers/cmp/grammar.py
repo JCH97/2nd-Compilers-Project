@@ -1,31 +1,19 @@
-from queue import Queue
 from .pycompiler import Grammar, Item
 from .automata import State
 from .utils import ContainerSet
 
 
-class GrammarTools:
+class GrammarHelp:
     @staticmethod
     def compute_local_first(firsts, alpha):
-        """
-        Computes First(alpha), given First(Vt) and First(Vn) 
-        alpha in (Vt U Vn)*
-        """
         first_alpha = ContainerSet()
-
         try:
             alpha_is_epsilon = alpha.IsEpsilon
         except:
             alpha_is_epsilon = False
-
-        # alpha == epsilon ? First(alpha) = { epsilon }
+        
         if alpha_is_epsilon:
             first_alpha.set_epsilon()
-
-        # alpha = X1 ... XN
-        # First(Xi) subset of First(alpha)
-        # epsilon  in First(X1)...First(Xi) ? First(Xi+1) subset of First(X) & First(alpha)
-        # epsilon in First(X1)...First(XN) ? epsilon in First(X) & First(alpha)
         else:
             for symbol in alpha:
                 first_symbol = firsts[symbol]
@@ -39,59 +27,41 @@ class GrammarTools:
 
     @staticmethod
     def compute_firsts(G: Grammar):
-        """
-        Computes First(Vt) U First(Vn) U First(alpha)
-        P: X -> alpha
-        """
         firsts = {}
         change = True
 
-        # init First(Vt)
         for terminal in G.terminals:
             firsts[terminal] = ContainerSet(terminal)
 
-        # init First(Vn)
         for nonterminal in G.nonTerminals:
             firsts[nonterminal] = ContainerSet()
 
         while change:
             change = False
 
-            # P: X -> alpha
             for production in G.Productions:
                 X = production.Left
                 alpha = production.Right
 
-                # get current First(X)
                 first_X = firsts[X]
 
-                # init First(alpha)
                 try:
                     first_alpha = firsts[alpha]
                 except:
                     first_alpha = firsts[alpha] = ContainerSet()
 
-                # CurrentFirst(alpha)???
-                local_first = GrammarTools.compute_local_first(firsts, alpha)
-
-                # update First(X) and First(alpha) from CurrentFirst(alpha)
+                local_first = GrammarHelp.compute_local_first(firsts, alpha)
                 change |= first_alpha.hard_update(local_first)
                 change |= first_X.hard_update(local_first)
-
-        # First(Vt) + First(Vt) + First(RightSides)
         return firsts
 
     @staticmethod
     def compute_follows(G: Grammar, firsts):
-        """
-        Computes Follow(Vn)
-        """
         follows = {}
         change = True
 
         local_firsts = {}
 
-        # init Follow(Vn)
         for nonterminal in G.nonTerminals:
             follows[nonterminal] = ContainerSet()
         follows[G.startSymbol] = ContainerSet(G.EOF)
@@ -99,16 +69,12 @@ class GrammarTools:
         while change:
             change = False
 
-            # P: X -> alpha
             for production in G.Productions:
                 X = production.Left
                 alpha = production.Right
 
                 follow_X = follows[X]
 
-                # X -> zeta Y beta
-                # First(beta) - { epsilon } subset of Follow(Y)
-                # beta ->* epsilon or X -> zeta Y ? Follow(X) subset of Follow(Y)
                 for i, symbol in enumerate(alpha):
                     if symbol.IsNonTerminal:
                         follow_symbol = follows[symbol]
@@ -116,7 +82,7 @@ class GrammarTools:
                         try:
                             first_beta = local_firsts[beta]
                         except KeyError:
-                            first_beta = local_firsts[beta] = GrammarTools.compute_local_first(
+                            first_beta = local_firsts[beta] = GrammarHelp.compute_local_first(
                                 firsts, beta)
                         change |= follow_symbol.update(first_beta)
                         if first_beta.contains_epsilon or len(beta) == 0:
@@ -158,7 +124,7 @@ class Action(tuple):
 
 
 class ShiftReduceParser:
-    def __init__(self, G, verbose=False):
+    def __init__(self, G, verbose = False):
         self.G = G
         self.verbose = verbose
         self.action = {}
@@ -180,26 +146,21 @@ class ShiftReduceParser:
             if self.verbose:
                 print(stack, w[cursor:])
 
-            # (Detect error)
             try:
                 action, tag = self.action[state][lookahead][0]
-                # (Shift case)
                 if action == Action.SHIFT:
                     stack.append(tag)
                     cursor += 1
                     operations.append(action)
-                # (Reduce case)
                 elif action == Action.REDUCE:
                     for _ in range(len(tag.Right)):
                         stack.pop()
                     stack.append(self.goto[stack[-1]][tag.Left][0])
                     output.append(tag)
                     operations.append(action)
-                # (OK case)
                 elif action == Action.OK:
                     # output.reverse()
                     return output, operations
-                # (Invalid case)
                 else:
                     assert False, 'Must be something wrong!'
             except KeyError:
@@ -217,13 +178,11 @@ class LR1Parser(ShiftReduceParser):
             return []
 
         lookaheads = ContainerSet()
-        # (Compute lookahead for child items)
         for preview in item.Preview():
             lookaheads.hard_update(
-                GrammarTools.compute_local_first(firsts, preview))
+                GrammarHelp.compute_local_first(firsts, preview))
 
         assert not lookaheads.contains_epsilon
-        # (Build and return child items)
         return [Item(prod, 0, lookaheads) for prod in next_symbol.productions]
 
     @staticmethod
@@ -266,7 +225,7 @@ class LR1Parser(ShiftReduceParser):
     def build_LR1_automaton(self):
         G = self.augmentedG = self.G.AugmentedGrammar(True)
 
-        firsts = GrammarTools.compute_firsts(G)
+        firsts = GrammarHelp.compute_firsts(G)
         firsts[G.EOF] = ContainerSet(G.EOF)
 
         start_production = G.startSymbol.productions[0]
@@ -300,7 +259,6 @@ class LR1Parser(ShiftReduceParser):
 
                 current_state.add_transition(symbol.Name, next_state)
 
-        # automaton.set_formatter(empty_formatter)
         self.automaton = automaton
 
     def _build_parsing_table(self):
@@ -316,23 +274,21 @@ class LR1Parser(ShiftReduceParser):
         for node in self.automaton:
             idx = node.idx
             for item in node.state:
-                # - Fill `self.Action` and `self.Goto` according to `item`)
-                # - Feel free to use `self._register(...)`)
                 if item.IsReduceItem:
                     prod = item.production
                     if prod.Left == self.augmentedG.startSymbol:
-                        self.is_lr1 &= GrammarTools._register(self.action, idx, self.augmentedG.EOF,
+                        self.is_lr1 &= GrammarHelp._register(self.action, idx, self.augmentedG.EOF,
                                                               Action((Action.OK, '')))
                     else:
                         for lookahead in item.lookaheads:
-                            self.is_lr1 &= GrammarTools._register(self.action, idx, lookahead,
+                            self.is_lr1 &= GrammarHelp._register(self.action, idx, lookahead,
                                                                   Action((Action.REDUCE, prod)))
                 else:
                     next_symbol = item.NextSymbol
                     if next_symbol.IsTerminal:
-                        self.is_lr1 &= GrammarTools._register(self.action, idx, next_symbol,
+                        self.is_lr1 &= GrammarHelp._register(self.action, idx, next_symbol,
                                                               Action((Action.SHIFT, node[next_symbol.Name][0].idx)))
                     else:
-                        self.is_lr1 &= GrammarTools._register(self.goto, idx, next_symbol,
+                        self.is_lr1 &= GrammarHelp._register(self.goto, idx, next_symbol,
                                                               node[next_symbol.Name][0].idx)
                 pass

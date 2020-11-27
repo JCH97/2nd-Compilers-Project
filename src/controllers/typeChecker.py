@@ -1,17 +1,6 @@
-from .cmp import visitor
-from .cmp import Scope, SelfType, AutoType, ErrorType, SemanticError
-from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
-
-
-WRONG_SIGNATURE = 'Method "%s" of "%s" already defined in "%s" with a different signature.'
-SELF_IS_READONLY = 'Variable "self" is read-only.'
-LOCAL_ALREADY_DEFINED = 'Variable "%s" is already defined in method "%s".'
-INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
-VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
-INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
-CYCLIC_HERITAGE = 'Type "%s" froms a cyclic heritage chain'
-ERROR = 'Linea %d: , Columna %d: '
-
+from cmp import Scope, SelfType, AutoType, ErrorType, SemanticError, visitor
+from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
+from messages import ERROR, INCOMPATIBLE_TYPES, INVALID_OPERATION, REDEFINED_METHOD, REDEFINED_VARIABLE, SELF_IS_READONLY, VARIABLE_NOT_DEFINED, CYCLIC_HERITAGE
 
 class TypeChecker:
     def __init__(self, context, errors=[]):
@@ -92,10 +81,8 @@ class TypeChecker:
                 pass
             else:
                 if parent_method.param_types != self.current_method.param_types or parent_method.return_type != self.current_method.return_type:
-                    self.errors.append(ERROR % (node.line, node.column) + WRONG_SIGNATURE % ( self.current_method.name, self.current_type.name, parent.name))
+                    self.errors.append(ERROR % (node.line, node.column) + REDEFINED_METHOD % ( self.current_method.name, self.current_type.name, parent.name))
 
-        # zip empareja uno con uno y crea y array de tuplas
-        # a = [1, 2, 3]  b = ['a', 'b', 'c']  => zip(a, b) = [(1, 'a'), (2, 'b'), (3, 'c')]
         for pname, ptype in zip(self.current_method.param_names, self.current_method.param_types):
             scope.define_variable(pname, ptype)
 
@@ -121,7 +108,7 @@ class TypeChecker:
 
         if_type = node.if_body.static_type
         else_type = node.else_body.static_type
-        node.static_type = if_type.type_union(else_type)
+        node.static_type = if_type.join_type(else_type)
 
     # while <expr> loop <expr> pool
     @visitor.when(WhileLoopNode)
@@ -151,7 +138,7 @@ class TypeChecker:
             try:
                 node_type = self.context.get_type(typex.lex)
             except SemanticError as err:
-                self.errors.append(ERROR % (typex.line, typex.column) + ex.text)
+                self.errors.append(ERROR % (typex.line, typex.column) + exp.text)
                 node_type = ErrorType()
 
             id_type = self.current_type if isinstance(node_type, SelfType) else node_type
@@ -183,8 +170,7 @@ class TypeChecker:
             try:
                 node_type = self.context.get_type(typex.lex)
             except SemanticError as err:
-                self.errors.append(
-                    ERROR % (typex.line, typex.column) + err.text)
+                self.errors.append(ERROR % (typex.line, typex.column) + err.text)
                 node_type = ErrorType()
             else:
                 if isinstance(node_type, SelfType):
@@ -198,7 +184,7 @@ class TypeChecker:
             self.visit(expr, child_scope)
             expr_type = expr.static_type
 
-            node.static_type = node.static_type.type_union(expr_type) if node.static_type else expr_type
+            node.static_type = node.static_type.join_type(expr_type) if node.static_type else expr_type
 
     # <id> <- <expression>
     @visitor.when(AssignNode)
@@ -331,7 +317,7 @@ class TypeChecker:
                     node_type = ErrorType()
                 else:
                     if isinstance(node_type, SelfType) or isinstance(node_type, AutoType):
-                        self.errors.append(ERROR_ON % (node.type.line, node.type.column) + f'Type "{node_type}" canot be used as type of a dispatch')
+                        self.errors.append(ERROR % (node.type.line, node.type.column) + f'Type "{node_type}" canot be used as type of a dispatch')
                         node_type = ErrorType()
 
                 if not obj_type.conforms_to(node_type):

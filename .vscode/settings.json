@@ -1,0 +1,4 @@
+{
+    "compile-hero.disable-compile-files-on-did-save-code": true,
+    "python.pythonPath": "/home/lisa/anaconda3/bin/python"
+}

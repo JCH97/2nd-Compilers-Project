@@ -1,6 +1,6 @@
 from .automata import *
 from .evaluation import *
-from .grammartools import *
+from .grammar import *
 from .pycompiler import *
 from .semantic import *
 from .utils import *

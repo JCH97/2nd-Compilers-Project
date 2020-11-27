@@ -16,6 +16,7 @@ from typeBuilder import TypeBuilder
 from typeChecker import TypeChecker
 from formatVisitor import FormatVisitor
 from typeInfer import TypeInferer
+from pathlib import Path
 
 WRONG_SIGNATURE = 'Method "%s" already defined in "%s" with a different signature.'
 SELF_IS_READONLY = 'Variable "self" is read-only.'
@@ -135,14 +136,15 @@ def run_pipeline(text):
     while inferer.visit(ast, scope):
         pass
     print(scope)
-    # tree = formatter.visit(ast)
-    # print(tree)
+    tree = formatter.visit(ast)
+    print(tree)
     print('Context:')
     print(context)
     return ast, errors, context, scope
 
 
 if __name__ == '__main__':
-    file = open('code.cl')
-    run_pipeline(file.read())
-    file.close()
+    p = Path.cwd() / 'test' / '9.cl'
+
+    with open(p) as file:
+        run_pipeline(file.read())

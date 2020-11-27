@@ -10,9 +10,9 @@ const vue = new Vue({
     },
     methods: {
         run: function () {
-            if (!this.code)
-                this.code = document.querySelector("#code").value;
-
+            this.code = document.querySelector("#code").value;
+            // console.log(this.code.length)
+            
             eel.handler(this.code)().then(data => {
                 this.errors = data.errors;
 

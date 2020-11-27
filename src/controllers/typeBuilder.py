@@ -1,9 +1,6 @@
-from .cmp import visitor
-from .cmp import AutoType, SelfType, ErrorType, SemanticError
-from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
-
-ERROR = 'Linea %d: , Columna %d: '
-
+from cmp import AutoType, SelfType, ErrorType, SemanticError, visitor
+from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
+from messages import ERROR
 
 class TypeBuilder:
     def __init__(self, context, errors=[]):
@@ -53,7 +50,7 @@ class TypeBuilder:
         try:
             self.context.get_type('Main').get_method('main')
         except SemanticError:
-            self.errors.append(ERROR % (node.line, node.column) + 'The class "Main" and its method "main" are needed.')
+            self.errors.append(ERROR % (node.line, node.column) + 'Class "Main" and method "main" are required.')
 
     @visitor.when(ClassDeclarationNode)
     def visit(self, node):
@@ -95,7 +92,7 @@ class TypeBuilder:
                 arg_type = ErrorType()
             else:
                 if isinstance(arg_type, SelfType):
-                    self.errors.append(ERROR_ON % (typex.line, typex.column) + f'Type "{arg_type.name}" canot be used as parameter type')
+                    self.errors.append(ERROR % (typex.line, typex.column) + f'Type "{arg_type.name}" canot be used as parameter type')
                     arg_type = ErrorType()
 
             arg_names.append(idx.lex)
