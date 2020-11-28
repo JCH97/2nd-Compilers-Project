@@ -1,6 +1,6 @@
 import ply.lex as lex
-from cmp import Token
-from parser import CoolGrammar
+from .cmp import Token
+from .parser import CoolGrammar
 
 literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.', ',']
 

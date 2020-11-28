@@ -1,5 +1,5 @@
-from cmp import Grammar, LR1Parser
-from astclass import *
+from .cmp import Grammar, LR1Parser
+from .astclass import *
 
 # grammar
 CoolGrammar = Grammar()

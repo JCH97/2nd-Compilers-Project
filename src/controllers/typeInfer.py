@@ -1,6 +1,6 @@
-from cmp import visitor, SelfType, AutoType, ErrorType, SemanticError, Scope, VariableInfo, Method, Type
-from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
-from messages import INFERENCE, INFERENCE_ATTR, INFERENCE_PARAM, INFERENCE_RETURN, INFERENCE_VAR
+from .cmp import visitor, SelfType, AutoType, ErrorType, SemanticError, Scope, VariableInfo, Method, Type
+from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
+from .messages import INFERENCE, INFERENCE_ATTR, INFERENCE_PARAM, INFERENCE_RETURN, INFERENCE_VAR
 
 class TypeInferer:
     def __init__(self, contxt, errors = [], inference: list = []):

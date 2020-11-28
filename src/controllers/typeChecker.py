@@ -1,6 +1,6 @@
-from cmp import Scope, SelfType, AutoType, ErrorType, SemanticError, visitor
-from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
-from messages import ERROR, INCOMPATIBLE_TYPES, INVALID_OPERATION, REDEFINED_METHOD, REDEFINED_VARIABLE, SELF_IS_READONLY, VARIABLE_NOT_DEFINED, CYCLIC_HERITAGE
+from .cmp import Scope, SelfType, AutoType, ErrorType, SemanticError, visitor
+from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode, IfThenElseNode, WhileLoopNode, BlockNode, LetInNode, CaseOfNode, AssignNode, UnaryNode, BinaryNode, LessEqualNode, LessNode, EqualNode, ArithmeticNode, NotNode, IsVoidNode, ComplementNode, FunctionCallNode, MemberCallNode, NewNode, AtomicNode, IntegerNode, IdNode, StringNode, BoolNode
+from .messages import ERROR, INCOMPATIBLE_TYPES, INVALID_OPERATION, REDEFINED_METHOD, REDEFINED_VARIABLE, SELF_IS_READONLY, VARIABLE_NOT_DEFINED, CYCLIC_HERITAGE
 
 class TypeChecker:
     def __init__(self, context, errors=[]):

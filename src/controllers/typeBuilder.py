@@ -1,6 +1,6 @@
-from cmp import AutoType, SelfType, ErrorType, SemanticError, visitor
-from parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
-from messages import ERROR
+from .cmp import AutoType, SelfType, ErrorType, SemanticError, visitor
+from .parser import ProgramNode, ClassDeclarationNode, AttrDeclarationNode, FuncDeclarationNode
+from .messages import ERROR
 
 class TypeBuilder:
     def __init__(self, context, errors=[]):

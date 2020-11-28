@@ -1,6 +1,6 @@
-from cmp import Context, Scope, SelfType, AutoType, ErrorType, SemanticError, visitor
-from parser import ProgramNode, ClassDeclarationNode
-from messages import ERROR
+from .cmp import Context, Scope, SelfType, AutoType, ErrorType, SemanticError, visitor
+from .parser import ProgramNode, ClassDeclarationNode
+from .messages import ERROR
 
 
 class TypeCollector(object):
