@@ -8,6 +8,64 @@
 
 <br />
 
+- José Carlos Hernández Piñera ..... C311
+- Henry Estévez Gómez .............. C311
+
+<br />
+
+## Temario
+
+- 1.Detalles técnicos
+    - Dependencias del proyecto
+    - Cómo ejecutarlo ?
+- 2.Documentación acerca del desarrollo y funcionamiento del proyecto
+    - Generación de tokens
+    - Proceso de parsing
+    - Recolección de tipos
+    - Construcción de tipos
+    - Chequeo de tipos
+    - Inferencia de tipos
+
+
+### 1.Detalles técnicos.
+
+En el proyecto se usan pocos módulos de terceros, a continuación solo los enunciamos, más adelante en el documento se describe su funcinamiento, en caso de que consideremos que se hace necesario.
+
+- pyl, en su versión 3.11
+- eel, en su versión 0.0.14
+- pipenv (se hace necesario tener instalado el módulo para ejecutar el entorno virtual)
+
+#### Forma de ejecutar el proyecto:
+Por el hecho de que usamos [_eel_](https://github.com/JCH97/Eel) para generar la interfaz visual del proyecto recomendamos que a la hora de ejecutar el mismo se tenga instalado _Chrome_ en la pc, ya que el módulo utiliza este, en su configuración por defecto, para generar la aplicación.
+
+- Abrir una terminal en la carpeta donde está ubicado el proyecto
+- Ejecutar el entorno virtual
+    ```bash
+    ~$ pipenv shell
+    ```
+- Instalar las dependecias dentro del entorno virtual
+    ```bash
+    ~$ pipenv install --ignore-pipfile
+    ```
+- Navegar hasta la carpeta `src`
+    ```bash
+    ~$ cd src
+    ```
+- Ejecutar
+    ```
+    ~$ python .
+    ```
+
+Después de ejecutar los pasos que se describen arriba se nos presenta una ventana.
+
+![Vista](./assets/desktop.png)
+
+En la parte izquierda escribimos el código en _Cool_ o podemos cargarlo directamente desde un archivo `.cl` a través del botón `Seleccionar archivo` y en la parte derecha se presentan los resultados de la inferencia. Una vez que seleccionemos el archivo o lo escribamos, hacer clic en `Run`. 
+
+Dentro de la carpeta del proyecto se exponen una serie de tests que pudieran contribir a las pruebas del mismo.
+
+### 2.Documentación acerca del desarrollo y funcionamiento del proyecto.
+
 El proceso de desarrollo de un compilador cuenta con varias fases o etapas que nos permiten conversión de un código de alto nivel a uno entendible por una computadora. Con el siguiente proyecto se pretende recoger de la mejor manera posible las primeras etapas dentro del mismo, para ello se transita por varias fases que permiten alcanzar el objetvo propuesto, dígase:
 - Generación de tokens (análisis lexicográfico)
 - Proceso de parsing (análisis sintáctico)

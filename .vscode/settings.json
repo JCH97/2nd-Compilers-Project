@@ -1,4 +1,4 @@
 {
     "compile-hero.disable-compile-files-on-did-save-code": true,
-    "python.pythonPath": "/home/lisa/anaconda3/bin/python"
+    "python.pythonPath": "/home/lisa/.local/share/virtualenvs/2doProject-A4uMkFn-/bin/python"
 }
