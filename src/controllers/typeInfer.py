@@ -113,7 +113,7 @@ class TypeInferer:
             self.current_method.return_type = var.type = body_type
 
     @visitor.when(IfThenElseNode)
-    def visit(self, node: IfThenElseNode, scope: Scope, expected_type = None):
+    def visit(self, node: IfThenElseNode, scope: Scope, new_type = None):
         self.visit(node.condition, scope.children[0], self.bool_type)
 
         self.visit(node.if_body, scope.children[1])
@@ -125,7 +125,7 @@ class TypeInferer:
         node.static_type = if_type.join_type(else_type)
 
     @visitor.when(WhileLoopNode)
-    def visit(self, node: WhileLoopNode, scope: Scope, expected_type = None):
+    def visit(self, node: WhileLoopNode, scope: Scope, new_type = None):
         self.visit(node.condition, scope.children[0], self.bool_type)
 
         self.visit(node.body, scope.children[1])
@@ -133,14 +133,14 @@ class TypeInferer:
         node.static_type = self.object_type
 
     @visitor.when(BlockNode)
-    def visit(self, node: BlockNode, scope: Scope, expected_type = None):
+    def visit(self, node: BlockNode, scope: Scope, new_type = None):
         for exp, child_scope in zip(node.expressions[:], scope.children[:]):
             self.visit(exp, child_scope)
 
         node.static_type = node.expressions[-1].static_type
 
     @visitor.when(LetInNode)
-    def visit(self, node: LetInNode, scope: Scope, expected_type = None):
+    def visit(self, node: LetInNode, scope: Scope, new_type = None):
         for (idx, typex, exp), child_scope, (i, var) in zip(node.let_body, scope.children[:-1], enumerate(scope.locals)):
             if exp:
                 self.visit(exp, child_scope, var.type if var.infered else None)
@@ -156,7 +156,7 @@ class TypeInferer:
                         node.let_body[i] = (idx.lex, var.type, exp)
                         self.inference.append(INFERENCE % (idx.line, idx.column) + INFERENCE_VAR % (idx.lex, var.type.name))
 
-        self.visit(node.in_body, scope.children[-1], expected_type)
+        self.visit(node.in_body, scope.children[-1], new_type)
 
         for i, var in enumerate(scope.locals):
             if not var.infered:
@@ -173,7 +173,7 @@ class TypeInferer:
         node.static_type = node.in_body.static_type
 
     @visitor.when(CaseOfNode)
-    def visit(self, node: CaseOfNode, scope: Scope, expected_type = None):
+    def visit(self, node: CaseOfNode, scope: Scope, new_type = None):
         self.visit(node.expression, scope.children[0])
 
         node.static_type = None
@@ -185,7 +185,7 @@ class TypeInferer:
             node.static_type = node.static_type.join_type(exp_type) if node.static_type else exp_type
 
     @visitor.when(AssignNode)
-    def visit(self, node: AssignNode, scope: Scope, expected_type = None):
+    def visit(self, node: AssignNode, scope: Scope, new_type = None):
         var = scope.find_variable(node.id.lex) if scope.is_defined(node.id.lex) else None
 
         self.visit(node.expression, scope.children[0], var.type if var and var.infered else None)
@@ -201,13 +201,13 @@ class TypeInferer:
         node.static_type = expr_type
 
     @visitor.when(NotNode)
-    def visit(self, node: NotNode, scope: Scope, expected_type = None):
+    def visit(self, node: NotNode, scope: Scope, new_type = None):
         self.visit(node.expression, scope.children[0], self.bool_type)
 
         node.static_type = self.bool_type
 
     @visitor.when(LessEqualNode)
-    def visit(self, node: LessEqualNode, scope: Scope, expected_type = None):
+    def visit(self, node: LessEqualNode, scope: Scope, new_type = None):
         self.visit(node.left, scope.children[0], self.int_type)
 
         self.visit(node.right, scope.children[1], self.int_type)
@@ -215,7 +215,7 @@ class TypeInferer:
         node.static_type = self.bool_type
 
     @visitor.when(LessNode)
-    def visit(self, node: LessNode, scope: Scope, expected_type = None):
+    def visit(self, node: LessNode, scope: Scope, new_type = None):
         self.visit(node.left, scope.children[0], self.int_type)
 
         self.visit(node.right, scope.children[1], self.int_type)
@@ -223,7 +223,7 @@ class TypeInferer:
         node.static_type = self.bool_type
 
     @visitor.when(EqualNode)
-    def visit(self, node: EqualNode, scope: Scope, expected_type = None):
+    def visit(self, node: EqualNode, scope: Scope, new_type = None):
         self.visit(node.left, scope.children[0], node.left.static_type)
 
         self.visit(node.right, scope.children[1], node.right.static_type)
@@ -231,26 +231,26 @@ class TypeInferer:
         node.static_type = self.bool_type
 
     @visitor.when(ArithmeticNode)
-    def visit(self, node: ArithmeticNode, scope: Scope, expected_type = None):
+    def visit(self, node: ArithmeticNode, scope: Scope, new_type = None):
         self.visit(node.left, scope.children[0], self.int_type)
         self.visit(node.right, scope.children[1], self.int_type)
 
         node.static_type = self.int_type
 
     @visitor.when(IsVoidNode)
-    def visit(self, node: IsVoidNode, scope: Scope, expected_type = None):
+    def visit(self, node: IsVoidNode, scope: Scope, new_type = None):
         self.visit(node.expression, scope.children[0])
 
         node.static_type = self.bool_type
 
     @visitor.when(ComplementNode)
-    def visit(self, node: ComplementNode, scope: Scope, expected_type = None):
+    def visit(self, node: ComplementNode, scope: Scope, new_type = None):
         self.visit(node.expression, scope.children[0], self.int_type)
 
         node.static_type = self.int_type
 
     @visitor.when(FunctionCallNode)
-    def visit(self, node: FunctionCallNode, scope: Scope, expected_type = None):
+    def visit(self, node: FunctionCallNode, scope: Scope, new_type = None):
         node_type = None
 
         if node.type:
@@ -286,7 +286,7 @@ class TypeInferer:
         node.static_type = node_type
 
     @visitor.when(MemberCallNode)
-    def visit(self, node: MemberCallNode, scope: Scope, expected_type = None):
+    def visit(self, node: MemberCallNode, scope: Scope, new_type = None):
         obj_type = self.current_type
 
         try:
@@ -307,7 +307,7 @@ class TypeInferer:
         node.static_type = node_type
 
     @visitor.when(NewNode)
-    def visit(self, node: NewNode, scope: Scope, expected_type = None):
+    def visit(self, node: NewNode, scope: Scope, new_type = None):
         try:
             node_type = self.context.get_type(node.type.lex)
         except SemanticError:
@@ -316,31 +316,31 @@ class TypeInferer:
         node.static_type = node_type
 
     @visitor.when(IntegerNode)
-    def visit(self, node: IntegerNode, scope: Scope, expected_type = None):
+    def visit(self, node: IntegerNode, scope: Scope, new_type = None):
         node.static_type = self.int_type
 
     @visitor.when(StringNode)
-    def visit(self, node: StringNode, scope: Scope, expected_type = None):
+    def visit(self, node: StringNode, scope: Scope, new_type = None):
         node.static_type = self.string_type
 
     @visitor.when(IdNode)
-    def visit(self, node: IdNode, scope: Scope, expected_type = None):
+    def visit(self, node: IdNode, scope: Scope, new_type = None):
         if scope.is_defined(node.token.lex):
             var = scope.find_variable(node.token.lex)
 
-            if expected_type and not var.infered:
-                if isinstance(expected_type, ErrorType) or isinstance(expected_type, SelfType):
+            if new_type and not var.infered:
+                if isinstance(new_type, ErrorType) or isinstance(new_type, SelfType):
                     pass #error
-                elif isinstance(expected_type, AutoType):
+                elif isinstance(new_type, AutoType):
                     pass #error
                 elif isinstance(var.type, ErrorType):
                     pass
                 elif isinstance(var.type, AutoType):
-                    var.type = expected_type
+                    var.type = new_type
                     var.infered = self.check = True
                     self.inference.append(INFERENCE % (node.line, node.column) +  INFERENCE_VAR % (node.token.lex, var.type.name))
-                elif not var.type.conforms_to(expected_type):
-                    var.type = expected_type if expected_type.conforms_to(var.type) else ErrorType()
+                elif not var.type.conforms_to(new_type):
+                    var.type = new_type if new_type.conforms_to(var.type) else ErrorType()
 
             node_type = var.type if var.infered else AutoType()
         else:
@@ -349,5 +349,5 @@ class TypeInferer:
         node.static_type = node_type
 
     @visitor.when(BoolNode)
-    def visit(self, node: BoolNode, scope: Scope, expected_type = None):
+    def visit(self, node: BoolNode, scope: Scope, new_type = None):
         node.static_type = self.bool_type
