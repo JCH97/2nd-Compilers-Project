@@ -75,9 +75,9 @@ def handler(code: str):
     
     comment_inferer  = _infererTypes(context, ast, scope, errors, inference)
 
+    # 'context': 'Context:\n' + context.__str__(),
     return {
         'errors': 'Errors:\n' + '.\n'.join(e for e in errors),
-        'context': 'Context:\n' + context.__str__(),
         'inference': 'Inference:\n' + '.\n'.join(i for i in inference)
     }
 

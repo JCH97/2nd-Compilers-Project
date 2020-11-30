@@ -2,9 +2,7 @@ import ply.lex as lex
 from .cmp import Token
 from .parser import CoolGrammar
 
-literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.', ',']
-
-reserved = {
+reservedKeywords = {
     'class': 'CLASS',
     'inherits': 'INHERITS',
     'if': 'IF',
@@ -23,11 +21,12 @@ reserved = {
     'isvoid': 'ISVOID',
 }
 
+literals = ['+', '-', '*', '/', ':', ';', '(', ')', '{', '}', '@', '.', ',']
 ignored = [' ', '\f', '\r', '\t', '\v']
 
 tokens = [    
     'TYPE', 'ID', 'INTEGER', 'STRING', 'BOOL', 'ACTION', 'ASSIGN', 'LESS', 'LESSEQUAL', 'EQUAL', 'INT_COMPLEMENT', 'NOT',
-] + list(reserved.values())
+] + list(reservedKeywords.values())
 
 tokens_dict = dict()
 
@@ -89,7 +88,7 @@ def t_TYPE(t):
 
 def t_ID(t):
     r'[a-z][A-Za-z0-9_]*'
-    t.type = reserved.get(t.value.lower(), 'ID')
+    t.type = reservedKeywords.get(t.value.lower(), 'ID')
     return t
 
 t_ASSIGN = r'<-'
@@ -97,7 +96,6 @@ t_LESS = r'<'
 t_LESSEQUAL = r'<='
 t_EQUAL = r'='
 t_INT_COMPLEMENT = r'~'
-
 t_ACTION = r'=>'
 
 def t_error(t):
@@ -108,7 +106,6 @@ def t_error(t):
 t_ignore = ''.join(ignored)
 
 def tokenizer(code):
-    ###### CREATE LEXER ######
     # lex.lex(optimize=1) compress code and file
     lexer = lex.lex()
 
@@ -126,35 +123,17 @@ def tokenizer(code):
 
     return tokens
 
-##### PROCESS INPUT ######
-
-
 # if __name__ == '__main__':
 
-#     # Get file as argument
-
-#     import sys
-#     if len(sys.argv) != 2:
-#         print('You need to specify a cool source file to read from.', sys.stderr)
-#         sys.exit(1)
-#     if not sys.argv[1].endswith('.cl'):
-#         print('Argument needs to be a cool source file ending on ".cl".',  sys.stderr)
-#         sys.exit(1)
-
-#     sourcefile = sys.argv[1]
-
-#     # Read source file
-
-#     global readed
-#     with open(sourcefile, 'r') as source:
-#         readed = source.read()
+#     from pathlib import Path
+    
+#     with open(Path.cwd() / 'file.txt', 'r') as file:
+#         lexer = lex.lex()
+#         readed = file.read()
 #         lexer.input(readed)
-
-#     # Read tokens
-
-#     while True:
-#         token = lexer.token()
-#         col = find_column(readed, token)
-#         if token is None:
-#             break
-#         print(token.value, token.lineno, col)
+#         while True:
+#             token = lexer.token()
+#             col = find_column(readed, token)
+#             if token is None:
+#                 break
+#             print(token.value, token.lineno, col)

@@ -9,18 +9,14 @@ class TypeBuilder:
         self.errors = errors
 
         self.object_type = self.context.get_type('Object')
-
         self.io_type = self.context.get_type('IO')
         self.io_type.set_parent(self.object_type)
-
         self.int_type = self.context.get_type('Int')
         self.int_type.set_parent(self.object_type)
         self.int_type.sealed = True
-
         self.string_type = self.context.get_type('String')
         self.string_type.set_parent(self.object_type)
         self.string_type.sealed = True
-
         self.bool_type = self.context.get_type('Bool')
         self.bool_type.set_parent(self.object_type)
         self.bool_type.sealed = True
@@ -28,12 +24,10 @@ class TypeBuilder:
         self.object_type.define_method('abort', [], [], self.object_type)
         self.object_type.define_method('type_name', [], [], self.string_type)
         self.object_type.define_method('copy', [], [], SelfType())
-
         self.io_type.define_method('out_string', ['x'], [self.string_type], SelfType())
         self.io_type.define_method('out_int', ['x'], [self.int_type], SelfType())
         self.io_type.define_method('in_string', [], [], self.string_type)
         self.io_type.define_method('in_int', [], [], self.int_type)
-
         self.string_type.define_method('length', [], [], self.int_type)
         self.string_type.define_method('concat', ['s'], [self.string_type], self.string_type)
         self.string_type.define_method('substr', ['i', 'l'], [self.int_type, self.int_type], self.string_type)
@@ -92,7 +86,7 @@ class TypeBuilder:
                 arg_type = ErrorType()
             else:
                 if isinstance(arg_type, SelfType):
-                    self.errors.append(ERROR % (typex.line, typex.column) + f'Type "{arg_type.name}" canot be used as parameter type')
+                    self.errors.append(ERROR % (typex.line, typex.column) + f'Type "{arg_type.name}" can\'t be used as parameter type')
                     arg_type = ErrorType()
 
             arg_names.append(idx.lex)

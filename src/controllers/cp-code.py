@@ -18,59 +18,6 @@ from formatVisitor import FormatVisitor
 from typeInfer import TypeInferer
 from pathlib import Path
 
-WRONG_SIGNATURE = 'Method "%s" already defined in "%s" with a different signature.'
-SELF_IS_READONLY = 'Variable "self" is read-only.'
-LOCAL_ALREADY_DEFINED = 'Variable "%s" is already defined in method "%s".'
-INCOMPATIBLE_TYPES = 'Cannot convert "%s" into "%s".'
-VARIABLE_NOT_DEFINED = 'Variable "%s" is not defined in "%s".'
-INVALID_OPERATION = 'Operation is not defined between "%s" and "%s".'
-
-
-tokens_dict = {
-    'CLASS': CoolGrammar['class'],
-    'INHERITS': CoolGrammar['inherits'],
-    'IF': CoolGrammar['if'],
-    'THEN': CoolGrammar['then'],
-    'ELSE': CoolGrammar['else'],
-    'FI': CoolGrammar['fi'],
-    'WHILE': CoolGrammar['while'],
-    'LOOP': CoolGrammar['loop'],
-    'POOL': CoolGrammar['pool'],
-    'LET': CoolGrammar['let'],
-    'IN': CoolGrammar['in'],
-    'CASE': CoolGrammar['case'],
-    'OF': CoolGrammar['of'],
-    'ESAC': CoolGrammar['esac'],
-    'NEW': CoolGrammar['new'],
-    'ISVOID': CoolGrammar['isvoid'],
-    'TYPE': CoolGrammar['type'],
-    'ID': CoolGrammar['id'],
-    'INTEGER': CoolGrammar['integer'],
-    'STRING': CoolGrammar['string'],
-    'BOOL': CoolGrammar['bool'],
-    'ACTION': CoolGrammar['=>'],
-    'ASSIGN': CoolGrammar['<-'],
-    'LESS': CoolGrammar['<'],
-    'LESSEQUAL': CoolGrammar['<='],
-    'EQUAL': CoolGrammar['='],
-    'INT_COMPLEMENT': CoolGrammar['~'],
-    'NOT': CoolGrammar['not'],
-    '+': CoolGrammar['+'],
-    '-': CoolGrammar['-'],
-    '*': CoolGrammar['*'],
-    '/': CoolGrammar['/'],
-    ':': CoolGrammar[':'],
-    ';': CoolGrammar[';'],
-    '(': CoolGrammar['('],
-    ')': CoolGrammar[')'],
-    '{': CoolGrammar['{'],
-    '}': CoolGrammar['}'],
-    '@': CoolGrammar['@'],
-    '.': CoolGrammar['.'],
-    ',': CoolGrammar[',']
-}
-
-
 def pprint_tokens(tokens):
     ocur, ccur, semi = CoolGrammar['{'], CoolGrammar['}'], CoolGrammar[';']
     indent = 0
@@ -91,8 +38,6 @@ def run_pipeline(text):
     print('=================== TEXT ======================')
     print(text)
     print('================== TOKENS =====================')
-    # tokens = [Token(token.value, tokens_dict[token.type])
-    #   for token in tokenizer(text)] + [Token('$', CoolGrammar.EOF)]
     tokens = tokenizer(text)
     pprint_tokens(tokens)
     print('=================== PARSE =====================')
@@ -144,7 +89,7 @@ def run_pipeline(text):
 
 
 if __name__ == '__main__':
-    p = Path.cwd() / 'test' / '9.cl'
+    p = Path.cwd() / 'test' / '6.cl'
 
     with open(p) as file:
         run_pipeline(file.read())

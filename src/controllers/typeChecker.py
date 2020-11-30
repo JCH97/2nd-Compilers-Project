@@ -32,7 +32,6 @@ class TypeChecker:
     def visit(self, node, scope):
         self.current_type = self.context.get_type(node.id.lex)
 
-        # check cicling herencing
         parent = self.current_type.parent
         while parent:
             if parent == self.current_type:
@@ -41,7 +40,6 @@ class TypeChecker:
                 break
             parent = parent.parent
 
-        # define las variables de la clase [las variables(que son los atributos) que se definieron en typeBuilder]
         for attr in self.current_type.attributes:
             scope.define_variable(attr.name, attr.type)
 
@@ -55,7 +53,7 @@ class TypeChecker:
         if node.expression:
             self.visit(node.expression, scope.create_child())
 
-            expr_type = node.expression.static_type  # static type of the expression
+            expr_type = node.expression.static_type
 
             node_type = self.current_type.get_attribute(node.id.lex).type
             node_type = self.current_type if isinstance(node_type, SelfType) else node_type
@@ -72,7 +70,6 @@ class TypeChecker:
         self.current_method = self.current_type.get_method(node.id.lex)
         scope.define_variable('self', self.current_type)
 
-        # check illegal redefinition
         parent = self.current_type.parent
         if parent:
             try:
@@ -174,7 +171,7 @@ class TypeChecker:
                 node_type = ErrorType()
             else:
                 if isinstance(node_type, SelfType):
-                    self.errors.append(ERROR % (typex.line, typex.column) + f'Type "{node_type.name}" cannot be used as case branch type')
+                    self.errors.append(ERROR % (typex.line, typex.column) + f'Type "{node_type.name}" can\'t be used as case branch type')
                     node_type = ErrorType()
 
             id_type = self.current_type if isinstance(node_type, SelfType) else node_type

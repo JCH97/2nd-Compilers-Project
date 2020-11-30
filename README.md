@@ -74,7 +74,7 @@ El proceso de desarrollo de un compilador cuenta con varias fases o etapas que n
 - Chequeo de tipos
 - Inferencia de tipos
 
-Para el desarrollo del proceso de generación de los tokens o análisis lexicográfico nos apoyamos en una librería de python, [_ply_](https://dabeaz.com/ply/ply.html) para ser más precisos, pues dentro de sus bondades permite la realización de dicho cómputo, se utilizó esto además, pues este punto no es el fuerte del proyecto y se precisaba el ahorro de tiempo en el desarrollo a la vez que se aseguraba la correctitud de la implementación. La librería en cuestión se divide en dos módulos `lex.py` y `yacc.py`; el primero es que nos interesa en estos momentos. La identificación de los tokens se apoya en el análisis de una serie de reglas basadas en expresiones regulares, sería algo como lo que presentamos a continuación:
+Para el desarrollo del proceso de generación de los tokens o análisis lexicográfico nos apoyamos en una librería de python, _ply_ para ser más precisos, pues dentro de sus bondades permite la realización de dicho cómputo, se utilizó esto además, pues este punto no es el fuerte del proyecto y se precisaba el ahorro de tiempo en el desarrollo a la vez que se aseguraba la correctitud de la implementación. La librería en cuestión se divide en dos módulos `lex.py` y `yacc.py`; el primero es que nos interesa en estos momentos. La identificación de los tokens se apoya en el análisis de una serie de reglas basadas en expresiones regulares, sería algo como lo que presentamos a continuación:
 
 ```python
 def t_STRING(t):
@@ -126,9 +126,9 @@ class_list %= def_class + class_list, lambda h, s: [s[1]] + s[2]
 class_list %= def_class, lambda h, s: [s[1]]
 ```
 
-Inferencia de tipos.
+#### Inferencia de tipos.
 
-Para el algoritmo propuesto a la hora de inferir los tipos nos apoyamos en el _AST_ construido a partir del árbol de derivación y el uso de las gramáticas atribuidas, el recorrido por el _AST_ es sumamente importante por el hecho de que cada nodo representa un elemento sintácticamente distinto y además incluye todo lo necesario para evaluar la expresión o programa reconocido. 
+Para el algoritmo propuesto a la hora de inferir los tipos nos apoyamos en el _AST_ construido a partir del árbol de derivación y el uso de las gramáticas atribuidas, el recorrido por el _AST_ es sumamente importante por el hecho de que cada nodo representa un elemento sintácticamente distinto y además incluye todo lo necesario para evaluar la expresión o programa reconocido. Para realizar estos recorridos por el _AST_ vamos a apoyarnos en el patrón _visitor_ que nos ayuda en este sentido.
 
 En principio realizamos cuatro pasadas sobre él que nos permiten realizr el proceso de inferencia. 
 
@@ -173,7 +173,7 @@ class Attribute:
 
 Ambas clases detectan la redefinición de los atributos que describen y nos posibilitan futuras operaciones con los valores que son marcados como _AUTO\_TYPE_ que son en definitiva el motivo de nuestro proyecto.
 
-El próximo paso en el camino hacia la inferencia es el chequeo de los tipos, en el chequeo se origina la creación de un _scope_ por cada nodo sintácticamente distinto, que por tanto encierra un significado dentro del _AST_, cada scope propicia la detección de errores e incongruencias dentro del código en _Cool_, además de desempeñar diversas funciones que no explicaremos en su totalidad, al finalizar este paso cada nodo se encontrará marcado con su adecuado tipo estático según la expresión dentro de la que esté definido; estas son las dos principales funciones de esta fase, no se entrará más en detalle para no alargar tanto el docuemento y pasar a explicar el funcionamiento de la inferencia en sí.
+El próximo paso en el camino hacia la inferencia es el chequeo de los tipos, en el chequeo se origina la creación de un _scope_ por cada nodo sintácticamente distinto, que por tanto encierra un significado dentro del _AST_, cada scope propicia la detección de errores e incongruencias dentro del código escrito en _Cool_, luego cada uno de ellos se usará en el proceso de la inferencia, al finalizar este paso cada nodo se encontrará marcado con su adecuado tipo estático según la expresión dentro de la que esté definido; estas son las dos principales funciones de esta fase, pasaremos a explicar el funcionamiento de la inferencia en sí.
 
 Cunado llega el momento de inferir los tipos, ya se encuentran propiamente calculados cada uno de los aspectos antes mencionados, por lo que toca hacer el cuarto recorrido sobre el _AST_, para dejar todos los _AUTO\_TYPE_ resueltos; en realidad en la inferencia se realizará más de una pasada por el árbol, por el hecho de que para inferir se delega en todo momento la resposabilidad de determinar un tipo lo más abajo posible en el árbol y en cada recorrido que se haga se infieren tantos tipos como sea posible, es decir, cada vez que se pueda inferir el tipo de alguna variable se volverá a realizar un recorrido sobre el _AST_, pues puede darse el caso de que otras variables dependan de la que se acaba de determinar; creo que esto se ilustra mejor con un ejemplo; notar que los recorridos paran una vez que no se pueda inferir ningún tipo:
 
@@ -220,8 +220,6 @@ class Main {
 
 Arriba no es posible saber los tipos de _b_ ni de _c_, pues no tenemos forma de saber con quién asociarlos, dado el hecho de que ellos no intervienen en ninguna operación que permita desambiguarlos.
 
-Similar a los casos anteriores; pero en esta ocasión, incluyendo atributos, la expresión `x + y` permite inferir los tipos los parámetros `x` y `y` como `int` así como los atributos `a` y `b`. El tipo de retorno del método `create_point()` se infiere a través del cuerpo de este y a su vez esto posibilita que se fije también el tipo de retorno de la función `init()`. Expliquemos como funciona el proceso de inferencia en este ejemplo; inicialmente en la primera pasada para realizar la inferencia se determinan los tipos de `x` y `y`, a través de la suma, lo mismo ocurre con el tipo de `b` que sale de la asignación, esta pasada también fija el tipo de retorno del método `create_point()` teniendo en cuenta el cuerpo de este. Luego como se infirieron tipos entonces se vuelve a realizar otro recorrido sobre el _AST_, como ya tenemos estos valores correctamente calculados el tipo de la variable `a` sale de la asignación `a <- b`, ahora para saber el tipo de retorno de la función `init()` necesitamos ver el cuerpo del método y por consiguiente analizar la última instrucción del bloque: `create_point()`; esta instrucción está marcada dentro del _AST_ como un nodo de tipo `MemberCallNode`, en el procesamiento que se realiza dentro dentro este se analiza el método al cuál hace referencia y se detecta que el tipo de retorno de ese método (estaba calculado en la primera pasada) es `Point` y por consiguiente el tipo de retorno de `init()` también se fija como `Point`.
-
 ```typescript
 class Point {
     a: AUTO_TYPE;
@@ -237,6 +235,8 @@ class Point {
 }
 ```
 
+Similar a los casos anteriores; pero en esta ocasión, incluyendo atributos, la expresión `x + y` permite inferir los tipos los parámetros `x` y `y` como `int` así como los atributos `a` y `b`. El tipo de retorno del método `create_point()` se infiere a través del cuerpo de este y a su vez esto posibilita que se fije también el tipo de retorno de la función `init()`. Expliquemos como funciona el proceso de inferencia en este ejemplo; inicialmente en la primera pasada para realizar la inferencia se determinan los tipos de `x` y `y`, a través de la suma, lo mismo ocurre con el tipo de `b` que sale de la asignación, esta pasada también fija el tipo de retorno del método `create_point()` teniendo en cuenta el cuerpo de este. Luego como se infirieron tipos entonces se vuelve a realizar otro recorrido sobre el _AST_, como ya tenemos estos valores correctamente calculados el tipo de la variable `a` sale de la asignación `a <- b`, ahora para saber el tipo de retorno de la función `init()` necesitamos ver el cuerpo del método y por consiguiente analizar la última instrucción del bloque: llamada al método `create_point()`; esta instrucción está marcada dentro del _AST_ como un nodo de tipo `MemberCallNode`, en el procesamiento que se realiza dentro de este se analiza el método al cuál hace referencia y se detecta que el tipo de retorno de ese método (estaba calculado en la primera pasada) es `Point` y por consiguiente el tipo de retorno de `init()` también se fija como `Point`.
+
 Para probar las funciones recursivas tenemos el caso de factorial. En esta los valores a inferir son `n` y el tipo de retorno del método. En el primer caso, la inferencia se realiza a través del producto entre `n` y el llamado a la función, pues dicho nodo dentro del _AST_ está marcado como `ArithmeticNode` y por tanto sus dos hijos tienen que ser de tipo `int`; esto posibilita la inferencia de `n`; mientras que el retorno de la función lo fija el cuerpo del método en cuestión, en este caso el `if-then-else`, el tipo estático del `if-then-else` está dado por la operación _join_ entre los tipos estáticos de la condición y los bloques `if-else`
 
 ```typescript
@@ -247,4 +247,4 @@ class Main {
 };
 ```
 
-En este informe no se pretende hacer una descripción tan detallada del problema, sino, más bien, dar a conocer cuáles son las pautas que seguimos durante la creación del proyecto.
+En el proyecto se muestran además unos tests que prueban diversas funcionalidades y pudieran servir para chequear el correcto funcionamiento de la inferencia; en caso de ser necesario, se pudiera recurrir a ellos para validar la implementación realizada.

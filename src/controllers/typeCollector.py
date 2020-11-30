@@ -10,7 +10,6 @@ class TypeCollector(object):
 
         self.context.add_type(SelfType())
         self.context.add_type(AutoType())
-
         self.context.create_type('Object')
         self.context.create_type('String')
         self.context.create_type('Int')
@@ -31,4 +30,4 @@ class TypeCollector(object):
         try:
             self.context.create_type(node.id.lex)
         except SemanticError as err:
-            self.errors.append(ERROR % (node.id.line, node.id.column) + err)
+            self.errors.append(ERROR % (node.id.line, node.id.column) + err.text)

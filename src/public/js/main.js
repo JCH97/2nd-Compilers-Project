@@ -3,7 +3,6 @@ const vue = new Vue({
     data: {
         errors: [],
         inference: [],
-        context: "",
         code: ""
     },
     mounted() {
@@ -16,12 +15,11 @@ const vue = new Vue({
             eel.handler(this.code)().then(data => {
                 this.errors = data.errors;
 
-                if (data.context) {
-                    this.context = data.context;
+                if (data.inference)
                     this.inference = data.inference;
-                }
+                else this.inference = `Inference: -`
 
-                document.querySelector("#result").value = `${data.errors}\n\n${data.context}\n\n${data.inference}`;
+                document.querySelector("#result").value = `${data.errors}\n\n${data.inference}`;
             })
 
         },
